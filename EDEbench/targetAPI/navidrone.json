@@ -1,0 +1,212 @@
+{
+    "targetAPI": "/api/album?_end=36",
+    "results": [
+        {
+            "playCount": 2084,
+            "playDate": "2025-09-07T11:09:33.839Z",
+            "rating": 3,
+            "starredAt": "2025-09-05T14:13:36.993254552Z",
+            "id": "6dGMsiesuYw9lti9yGIGWY",
+            "libraryId": 1,
+            "libraryPath": "/music",
+            "libraryName": "Music Library",
+            "name": "netBloc Vol. 42: Live, The Universe & Everything",
+            "albumArtistId": "63sqASlAfjbGMuLP4JhnZU",
+            "albumArtist": "Various Artists",
+            "maxYear": 2013,
+            "minYear": 2013,
+            "date": "2013",
+            "maxOriginalYear": 0,
+            "minOriginalYear": 0,
+            "compilation": true,
+            "comment": "Courtesy of https://blocsonic.com",
+            "songCount": 11,
+            "duration": 2954.7603,
+            "size": 72207475,
+            "discs": {
+                "1": ""
+            },
+            "orderAlbumName": "netbloc vol. 42: live, the universe & everything",
+            "orderAlbumArtistName": "various artists",
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "",
+            "genres": null,
+            "tags": {
+                "tracktotal": [
+                    "12"
+                ]
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": "63sqASlAfjbGMuLP4JhnZU",
+                        "name": "Various Artists",
+                        "missing": false
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": "0VBxu6h9ST5P62ePfkmG1P",
+                        "name": "Dr. Quandary",
+                        "missing": false
+                    },
+                    {
+                        "id": "0jqNp8NTvpoMvgjzacg2ff",
+                        "name": "Devaine",
+                        "missing": false
+                    },
+                    {
+                        "id": "7xSSgejYrro426gR2QH0Je",
+                        "name": "Celebration",
+                        "missing": false
+                    },
+                    {
+                        "id": "7hjBDuZB7XHFqQzGsacseH",
+                        "name": "Pete Lund",
+                        "missing": false
+                    },
+                    {
+                        "id": "4OJIIZzEW88x9f3YR6jxWN",
+                        "name": "Stephane TV",
+                        "missing": false
+                    },
+                    {
+                        "id": "1IcxKCiC6XnloE11jzEkPE",
+                        "name": "Divenere",
+                        "missing": false
+                    },
+                    {
+                        "id": "3FEM0uXZff9JKLYqO8ZdOL",
+                        "name": "Post Human Era",
+                        "missing": false
+                    },
+                    {
+                        "id": "01IYwp4mXheRgU3APvTxIK",
+                        "name": "Pavel Tukki",
+                        "missing": false
+                    },
+                    {
+                        "id": "0J9w62acgfFA26lWw42xRP",
+                        "name": "entertainment for the braindead",
+                        "missing": false
+                    },
+                    {
+                        "id": "2mzm1hYaXE3hULchNQjtVh",
+                        "name": "Zhada",
+                        "missing": false
+                    },
+                    {
+                        "id": "5YmjdUAubz4SJkrwrj2HLF",
+                        "name": "Dead Poets",
+                        "missing": false
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": "2025-03-26T22:26:49.333463141Z",
+            "createdAt": "2025-03-26T22:26:49.315688846Z",
+            "updatedAt": "2023-03-10T02:19:02.086551186Z"
+        }
+    ],
+    "EDEConfig": [
+        {
+            "playCount": true,
+            "playDate": true,
+            "rating": true,
+            "starredAt": true,
+            "id": false,
+            "libraryId": true,
+            "libraryPath": true,
+            "libraryName": true,
+            "name": false,
+            "albumArtistId": true,
+            "albumArtist": false,
+            "maxYear": true,
+            "minYear": true,
+            "date": true,
+            "maxOriginalYear": true,
+            "minOriginalYear": true,
+            "compilation": true,
+            "comment": true,
+            "songCount": true,
+            "duration": true,
+            "size": false,
+            "discs": true,
+            "orderAlbumName": true,
+            "orderAlbumArtistName": true,
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "",
+            "genres": null,
+            "tags": {
+                "tracktotal": false
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": false,
+                        "name": false,
+                        "missing": true
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    },
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": true,
+            "createdAt": true,
+            "updatedAt": false
+        }
+    ]
+}

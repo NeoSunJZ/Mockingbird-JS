@@ -1,0 +1,381 @@
+{
+    "targetAPI": "/api/ms/products?categories=men&page=1",
+    "results": {
+        "hits": [],
+        "query": "",
+        "processingTimeMs": 0,
+        "hitsPerPage": 20,
+        "page": 1,
+        "totalPages": 0,
+        "totalHits": 0,
+        "facetDistribution": {
+            "categories.category.name": {
+                " Books": 5,
+                "Combo": 4,
+                "Cosmetic": 42,
+                " Electronics": 5,
+                " Fashion": 39,
+                "Fashion > Women": 8,
+                " Home": 5,
+                "Home > Furniture": 4,
+                " Home > Furniture > Chair": 4,
+                "Jewellery": 42,
+                "Kids": 2,
+                "Men": 34,
+                "uncategorized": 167,
+                "Women": 57
+            },
+            "categories.category.slug": {},
+            "manageInventory": {},
+            "option.Color": {},
+            "option.material": {},
+            "option.size": {},
+            "originCountry": {},
+            "price": {},
+            "status": {},
+            "stock": {},
+            "storeId": {},
+            "styleCode": {},
+            "tags.name": {}
+        },
+        "facetStats": {},
+        "allfacetDistribution": {
+            "categories.category.name": {
+                " Books": 5,
+                "Combo": 4,
+                "Cosmetic": 42,
+                " Electronics": 5,
+                " Fashion": 39,
+                "Fashion > Women": 8,
+                " Home": 5,
+                "Home > Furniture": 4,
+                " Home > Furniture > Chair": 4,
+                "Jewellery": 42,
+                "Kids": 2,
+                "Men": 34,
+                "uncategorized": 167,
+                "Women": 57
+            },
+            "categories.category.slug": {
+                "electronics": 1,
+                "kids": 2,
+                "men": 1,
+                "women": 20
+            },
+            "manageInventory": {
+                "false": 234
+            },
+            "option.Color": {
+                "#4500ef": 1
+            },
+            "option.material": {
+                "Carbon Fiber": 1,
+                "Cotton": 9,
+                "Polyester": 3
+            },
+            "option.size": {
+                "One -Size": 8,
+                "S": 3
+            },
+            "originCountry": {
+                "US": 1
+            },
+            "price": {
+                "0": 3,
+                "1": 1,
+                "99": 98,
+                "149": 5,
+                "399": 1,
+                "499": 2,
+                "799": 1,
+                "899": 1,
+                "999": 4,
+                "1199": 1,
+                "1498": 1,
+                "1499": 3,
+                "1503": 1,
+                "1779": 2,
+                "1999": 3,
+                "2099": 1,
+                "2299": 2,
+                "2399": 4,
+                "2499": 1,
+                "2672": 6,
+                "2678": 3,
+                "2682": 3,
+                "2723": 2,
+                "2734": 2,
+                "2758": 1,
+                "2799": 1,
+                "2811": 2,
+                "2816": 1,
+                "2861": 2,
+                "2882": 2,
+                "2899": 1,
+                "2903": 3,
+                "2999": 2,
+                "3047": 2,
+                "3053": 2,
+                "3070": 1,
+                "3073": 3,
+                "3078": 1,
+                "3087": 3,
+                "3116": 4,
+                "3129": 2,
+                "3133": 1,
+                "3171": 3,
+                "3265": 2,
+                "3271": 3,
+                "3315": 3,
+                "3324": 4,
+                "3338": 4,
+                "3369": 2,
+                "3402": 3,
+                "3442": 1,
+                "3459": 2,
+                "3462": 3,
+                "3513": 1,
+                "3611": 2,
+                "3620": 1,
+                "3626": 3,
+                "3736": 3,
+                "3798": 3,
+                "3831": 2,
+                "5217": 2,
+                "5555": 1,
+                "3052.85": 1
+            },
+            "status": {
+                "draft": 39,
+                "published": 195
+            },
+            "stock": {
+                "9999": 3,
+                "10000": 231
+            },
+            "storeId": {
+                "store_01JJ66632VQYPSZ7Z4J3ATAWAP": 234
+            },
+            "styleCode": {},
+            "tags.name": {
+                "Most Selling": 1,
+                "New": 2,
+                "ON SALE": 9,
+                "Popular": 1,
+                "Recommended": 1
+            }
+        },
+        "allfacetStats": {
+            "price": {
+                "min": 0,
+                "max": 5555
+            },
+            "stock": {
+                "min": 9999,
+                "max": 10000
+            }
+        },
+        "categories": [
+            {
+                "id": "category_01JH7VXASTDTWRYXTPTXWX0G5Y",
+                "name": "Men",
+                "slug": "men",
+                "thumbnail": "https://misiki.gumlet.io/blogs/men_desktop-ynepggkelh4j.jpg?tr=w-0,h-1660,ar-2-1",
+                "metaDescription": null,
+                "metaKeywords": null,
+                "metaTitle": null,
+                "description": null
+            }
+        ],
+        "cache": "HIT"
+    },
+    "EDEConfig": {
+        "hits": false,
+        "query": "",
+        "processingTimeMs": true,
+        "hitsPerPage": true,
+        "page": true,
+        "totalPages": false,
+        "totalHits": false,
+        "facetDistribution": {
+            "categories.category.name": {
+                " Books": true,
+                "Combo": true,
+                "Cosmetic": true,
+                " Electronics": true,
+                " Fashion": true,
+                "Fashion > Women": true,
+                " Home": true,
+                "Home > Furniture": true,
+                " Home > Furniture > Chair": true,
+                "Jewellery": true,
+                "Kids": true,
+                "Men": true,
+                "uncategorized": true,
+                "Women": true
+            },
+            "categories.category.slug": {},
+            "manageInventory": {},
+            "option.Color": {},
+            "option.material": {},
+            "option.size": {},
+            "originCountry": {},
+            "price": {},
+            "status": {},
+            "stock": {},
+            "storeId": {},
+            "styleCode": {},
+            "tags.name": {}
+        },
+        "facetStats": {},
+        "allfacetDistribution": {
+            "categories.category.name": {
+                " Books": true,
+                "Combo": true,
+                "Cosmetic": true,
+                " Electronics": true,
+                " Fashion": true,
+                "Fashion > Women": true,
+                " Home": true,
+                "Home > Furniture": true,
+                " Home > Furniture > Chair": true,
+                "Jewellery": true,
+                "Kids": true,
+                "Men": true,
+                "uncategorized": true,
+                "Women": true
+            },
+            "categories.category.slug": {
+                "electronics": true,
+                "kids": true,
+                "men": true,
+                "women": true
+            },
+            "manageInventory": {
+                "false": true
+            },
+            "option.Color": {
+                "#4500ef": true
+            },
+            "option.material": {
+                "Carbon Fiber": true,
+                "Cotton": true,
+                "Polyester": true
+            },
+            "option.size": {
+                "One -Size": true,
+                "S": true
+            },
+            "originCountry": {
+                "US": true
+            },
+            "price": {
+                "0": true,
+                "1": true,
+                "99": true,
+                "149": true,
+                "399": true,
+                "499": true,
+                "799": true,
+                "899": true,
+                "999": true,
+                "1199": true,
+                "1498": true,
+                "1499": true,
+                "1503": true,
+                "1779": true,
+                "1999": true,
+                "2099": true,
+                "2299": true,
+                "2399": true,
+                "2499": true,
+                "2672": true,
+                "2678": true,
+                "2682": true,
+                "2723": true,
+                "2734": true,
+                "2758": true,
+                "2799": true,
+                "2811": true,
+                "2816": true,
+                "2861": true,
+                "2882": true,
+                "2899": true,
+                "2903": true,
+                "2999": true,
+                "3047": true,
+                "3053": true,
+                "3070": true,
+                "3073": true,
+                "3078": true,
+                "3087": true,
+                "3116": true,
+                "3129": true,
+                "3133": true,
+                "3171": true,
+                "3265": true,
+                "3271": true,
+                "3315": true,
+                "3324": true,
+                "3338": true,
+                "3369": true,
+                "3402": true,
+                "3442": true,
+                "3459": true,
+                "3462": true,
+                "3513": true,
+                "3611": true,
+                "3620": true,
+                "3626": true,
+                "3736": true,
+                "3798": true,
+                "3831": true,
+                "5217": true,
+                "5555": true,
+                "3052.85": true
+            },
+            "status": {
+                "draft": true,
+                "published": true
+            },
+            "stock": {
+                "9999": true,
+                "10000": true
+            },
+            "storeId": {
+                "store_01JJ66632VQYPSZ7Z4J3ATAWAP": true
+            },
+            "styleCode": {},
+            "tags.name": {
+                "Most Selling": true,
+                "New": true,
+                "ON SALE": true,
+                "Popular": true,
+                "Recommended": true
+            }
+        },
+        "allfacetStats": {
+            "price": {
+                "min": false,
+                "max": false
+            },
+            "stock": {
+                "min": false,
+                "max": false
+            }
+        },
+        "categories": [
+            {
+                "id": false,
+                "name": false,
+                "slug": false,
+                "thumbnail": false,
+                "metaDescription": null,
+                "metaKeywords": null,
+                "metaTitle": null,
+                "description": null
+            }
+        ],
+        "cache": true
+    }
+}

@@ -1,0 +1,87 @@
+{
+    "targetAPI": "/answer/api/v1/tags/page?page=1&page_size=20&query_cond=popular",
+    "results": {
+        "code": 200,
+        "reason": "base.success",
+        "msg": "成功。",
+        "data": {
+            "count": 2,
+            "list": [
+                {
+                    "tag_id": "10030000000000001",
+                    "slug_name": "support",
+                    "display_name": "support",
+                    "excerpt": "\u003cp\u003eFor general support questions.\u003c/p\u003e",
+                    "description": "For general support questions.",
+                    "original_text": "For general support questions.",
+                    "parsed_text": "\u003cp\u003eFor general support questions.\u003c/p\u003e",
+                    "follow_count": 0,
+                    "question_count": 2,
+                    "is_follower": false,
+                    "created_at": 1747657688,
+                    "updated_at": 1747657688,
+                    "recommend": false,
+                    "reserved": false
+                },
+                {
+                    "tag_id": "10030000000000021",
+                    "slug_name": "测试",
+                    "display_name": "测试",
+                    "excerpt": "",
+                    "description": "",
+                    "original_text": "",
+                    "parsed_text": "",
+                    "follow_count": 0,
+                    "question_count": 1,
+                    "is_follower": false,
+                    "created_at": 1747657835,
+                    "updated_at": 1747657835,
+                    "recommend": false,
+                    "reserved": false
+                }
+            ]
+        }
+    },
+    "EDEConfig": {
+        "code": true,
+        "reason": true,
+        "msg": true,
+        "data": {
+            "count": false,
+            "list": [
+                {
+                    "tag_id": false,
+                    "slug_name": false,
+                    "display_name": false,
+                    "excerpt": false,
+                    "description": false,
+                    "original_text": false,
+                    "parsed_text": false,
+                    "follow_count": false,
+                    "question_count": false,
+                    "is_follower": false,
+                    "created_at": false,
+                    "updated_at": false,
+                    "recommend": false,
+                    "reserved": false
+                },
+                {
+                    "tag_id": false,
+                    "slug_name": false,
+                    "display_name": false,
+                    "excerpt": false,
+                    "description": true,
+                    "original_text": false,
+                    "parsed_text": false,
+                    "follow_count": false,
+                    "question_count": false,
+                    "is_follower": false,
+                    "created_at": false,
+                    "updated_at": false,
+                    "recommend": false,
+                    "reserved": false
+                }
+            ]
+        }
+    }
+}

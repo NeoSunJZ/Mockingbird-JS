@@ -1,0 +1,237 @@
+{
+    "targetAPI": "/system/dict/list",
+    "results": {
+        "total": 10,
+        "rows": [
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u7528\u6237\u6027\u522b\u5217\u8868",
+                "dictId": 1,
+                "dictName": "\u7528\u6237\u6027\u522b",
+                "dictType": "sys_user_sex",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u83dc\u5355\u72b6\u6001\u5217\u8868",
+                "dictId": 2,
+                "dictName": "\u83dc\u5355\u72b6\u6001",
+                "dictType": "sys_show_hide",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u7cfb\u7edf\u5f00\u5173\u5217\u8868",
+                "dictId": 3,
+                "dictName": "\u7cfb\u7edf\u5f00\u5173",
+                "dictType": "sys_normal_disable",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u4efb\u52a1\u72b6\u6001\u5217\u8868",
+                "dictId": 4,
+                "dictName": "\u4efb\u52a1\u72b6\u6001",
+                "dictType": "sys_job_status",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u4efb\u52a1\u5206\u7ec4\u5217\u8868",
+                "dictId": 5,
+                "dictName": "\u4efb\u52a1\u5206\u7ec4",
+                "dictType": "sys_job_group",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u7cfb\u7edf\u662f\u5426\u5217\u8868",
+                "dictId": 6,
+                "dictName": "\u7cfb\u7edf\u662f\u5426",
+                "dictType": "sys_yes_no",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u901a\u77e5\u7c7b\u578b\u5217\u8868",
+                "dictId": 7,
+                "dictName": "\u901a\u77e5\u7c7b\u578b",
+                "dictType": "sys_notice_type",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u901a\u77e5\u72b6\u6001\u5217\u8868",
+                "dictId": 8,
+                "dictName": "\u901a\u77e5\u72b6\u6001",
+                "dictType": "sys_notice_status",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u64cd\u4f5c\u7c7b\u578b\u5217\u8868",
+                "dictId": 9,
+                "dictName": "\u64cd\u4f5c\u7c7b\u578b",
+                "dictType": "sys_oper_type",
+                "status": "0"
+            },
+            {
+                "createBy": "admin",
+                "createTime": "2025-05-26 11:04:06",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u767b\u5f55\u72b6\u6001\u5217\u8868",
+                "dictId": 10,
+                "dictName": "\u7cfb\u7edf\u72b6\u6001",
+                "dictType": "sys_common_status",
+                "status": "0"
+            }
+        ],
+        "code": 0,
+        "msg": null
+    },
+    "EDEConfig": {
+        "total": false,
+        "rows": [
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            },
+            {
+                "createBy": false,
+                "createTime": false,
+                "updateBy": null,
+                "updateTime": null,
+                "remark": false,
+                "dictId": false,
+                "dictName": false,
+                "dictType": false,
+                "status": false
+            }
+        ],
+        "code": false,
+        "msg": null
+    }
+}

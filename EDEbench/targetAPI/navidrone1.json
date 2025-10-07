@@ -1,0 +1,295 @@
+{
+    "targetAPI": "/api/album?_end=36",
+    "results": [
+        {
+            "playCount": 88,
+            "playDate": "2025-09-03T23:07:32.084Z",
+            "rating": 4,
+            "starredAt": "2025-08-29T15:27:22.158748124Z",
+            "id": "5hUTgQpLbrUXmkn8D6Jbwc",
+            "libraryId": 1,
+            "libraryPath": "/music",
+            "libraryName": "Music Library",
+            "name": "Can I Have Your Love Tonight",
+            "albumArtistId": "17aaSbOlAlhrMGvNYo5Ufa",
+            "albumArtist": "Konstentyn",
+            "maxYear": 2020,
+            "minYear": 2020,
+            "date": "2020",
+            "maxOriginalYear": 0,
+            "minOriginalYear": 0,
+            "compilation": false,
+            "comment": "http://www.jamendo.com cc_standard",
+            "songCount": 1,
+            "duration": 302.16,
+            "size": 6556160,
+            "discs": {
+                "1": ""
+            },
+            "orderAlbumName": "can i have your love tonight",
+            "orderAlbumArtistName": "konstentyn",
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "smoothjazz",
+            "genres": [
+                {
+                    "id": "7CbicCx3Jl45MWstTYPgRl",
+                    "name": "smoothjazz"
+                }
+            ],
+            "tags": {
+                "genre": [
+                    "smoothjazz"
+                ],
+                "recordlabel": [
+                    "http://www.jamendo.com"
+                ]
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": "2025-03-26T22:26:41.026830095Z",
+            "createdAt": "2025-03-26T22:26:41.02330302Z",
+            "updatedAt": "2023-03-10T02:16:28.326313406Z"
+        },
+        {
+            "playCount": 868,
+            "playDate": "2025-09-07T08:20:38.585Z",
+            "rating": 4,
+            "starred": true,
+            "starredAt": "2025-09-06T10:07:44.796503284Z",
+            "id": "6qVa68sKTKahAuJabPcGQu",
+            "libraryId": 1,
+            "libraryPath": "/music",
+            "libraryName": "Music Library",
+            "name": "Chrono Jigga",
+            "albumArtistId": "33X3V2Xn7Cip7WqqfXNkL8",
+            "albumArtist": "2 Mello",
+            "maxYear": 2013,
+            "minYear": 2013,
+            "maxOriginalYear": 0,
+            "minOriginalYear": 0,
+            "compilation": false,
+            "comment": "http://scrubclubrecords.com",
+            "songCount": 12,
+            "duration": 2536.2698,
+            "size": 109758821,
+            "discs": {
+                "1": ""
+            },
+            "orderAlbumName": "chrono jigga",
+            "orderAlbumArtistName": "2 mello",
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "Hip-Hop",
+            "genres": [
+                {
+                    "id": "3MpUwQyzo05bKBxkfNQLVI",
+                    "name": "Hip-Hop"
+                }
+            ],
+            "tags": {
+                "genre": [
+                    "Hip-Hop"
+                ],
+                "recordlabel": [
+                    "Scrub Club Records"
+                ]
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": "33X3V2Xn7Cip7WqqfXNkL8",
+                        "name": "2 Mello",
+                        "missing": false
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": "33X3V2Xn7Cip7WqqfXNkL8",
+                        "name": "2 Mello",
+                        "missing": false
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": "33X3V2Xn7Cip7WqqfXNkL8",
+                        "name": "2 Mello",
+                        "missing": false
+                    },
+                    {
+                        "id": "2a2bxQwcQgp5h2kRiGoWyd",
+                        "name": "2 Mello, Yasunori Mitsuda, and Nobuo Uematsu",
+                        "missing": false
+                    }
+                ],
+                "engineer": [
+                    {
+                        "id": "11lVqK1vMXJDo3KOMKz6F2",
+                        "name": "ngineer",
+                        "missing": false
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": "2025-03-26T22:26:37.103732098Z",
+            "createdAt": "2025-03-26T22:26:37.095348032Z",
+            "updatedAt": "2023-03-10T02:13:58.390106412Z"
+        }
+    ],
+    "EDEConfig": [
+        {
+            "playCount": true,
+            "playDate": true,
+            "rating": true,
+            "starredAt": true,
+            "id": false,
+            "libraryId": true,
+            "libraryPath": true,
+            "libraryName": true,
+            "name": false,
+            "albumArtistId": true,
+            "albumArtist": false,
+            "maxYear": true,
+            "minYear": true,
+            "date": true,
+            "maxOriginalYear": true,
+            "minOriginalYear": true,
+            "compilation": true,
+            "comment": true,
+            "songCount": true,
+            "duration": true,
+            "size": false,
+            "discs": true,
+            "orderAlbumName": true,
+            "orderAlbumArtistName": true,
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "",
+            "genres": [
+                {
+                    "id": true,
+                    "name": true
+                }
+            ],
+            "tags": {
+                "genre": false,
+                "recordlabel": false
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": false,
+                        "name": false,
+                        "missing": true
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": true,
+            "createdAt": true,
+            "updatedAt": false
+        },
+        {
+            "playCount": true,
+            "playDate": true,
+            "rating": true,
+            "starredAt": true,
+            "id": false,
+            "libraryId": true,
+            "libraryPath": true,
+            "libraryName": true,
+            "name": false,
+            "albumArtistId": true,
+            "albumArtist": false,
+            "maxYear": true,
+            "minYear": true,
+            "date": true,
+            "maxOriginalYear": true,
+            "minOriginalYear": true,
+            "compilation": true,
+            "comment": true,
+            "songCount": true,
+            "duration": true,
+            "size": false,
+            "discs": true,
+            "orderAlbumName": true,
+            "orderAlbumArtistName": true,
+            "explicitStatus": "",
+            "externalInfoUpdatedAt": null,
+            "genre": "",
+            "genres": [
+                {
+                    "id": true,
+                    "name": true
+                }
+            ],
+            "tags": {
+                "genre": false,
+                "recordlabel": false
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": false,
+                        "name": false,
+                        "missing": true
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ]
+            },
+            "missing": false,
+            "importedAt": true,
+            "createdAt": true,
+            "updatedAt": false
+        }
+    ]
+}

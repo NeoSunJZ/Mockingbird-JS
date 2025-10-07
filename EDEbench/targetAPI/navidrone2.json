@@ -1,0 +1,193 @@
+{
+    "targetAPI": "/api/song",
+    "results": [
+        {
+            "playCount": 88,
+            "playDate": "2025-09-03T23:07:32.084Z",
+            "starredAt": "2025-09-07T13:07:00.354599782Z",
+            "bookmarkPosition": 0,
+            "id": "s00C9MhOEmlMNNu3DSoWeC",
+            "libraryId": 1,
+            "libraryPath": "/music",
+            "libraryName": "Music Library",
+            "folderId": "0y2a45hXbl7hIrAedDoPby",
+            "path": "Konstentyn/Konstentyn - Can I Have Your Love Tonight - 191299 --- Jamendo - MP3/01-1730657-Konstentyn-Can I Have Your Love Tonight.mp3",
+            "title": "Can I Have Your Love Tonight",
+            "album": "Can I Have Your Love Tonight",
+            "artistId": "17aaSbOlAlhrMGvNYo5Ufa",
+            "artist": "Konstentyn",
+            "albumArtistId": "17aaSbOlAlhrMGvNYo5Ufa",
+            "albumArtist": "Konstentyn",
+            "albumId": "5hUTgQpLbrUXmkn8D6Jbwc",
+            "hasCoverArt": true,
+            "trackNumber": 1,
+            "discNumber": 0,
+            "year": 2020,
+            "date": "2020",
+            "originalYear": 0,
+            "releaseYear": 0,
+            "size": 6556160,
+            "suffix": "mp3",
+            "duration": 302.16,
+            "bitRate": 173,
+            "sampleRate": 44100,
+            "bitDepth": 0,
+            "channels": 2,
+            "genre": "smoothjazz",
+            "genres": [
+                {
+                    "id": "7CbicCx3Jl45MWstTYPgRl",
+                    "name": "smoothjazz"
+                }
+            ],
+            "orderTitle": "can i have your love tonight",
+            "orderAlbumName": "can i have your love tonight",
+            "orderArtistName": "konstentyn",
+            "orderAlbumArtistName": "konstentyn",
+            "compilation": false,
+            "comment": "http://www.jamendo.com cc_standard",
+            "lyrics": "[]",
+            "explicitStatus": "",
+            "rgAlbumGain": 0,
+            "rgAlbumPeak": 1,
+            "rgTrackGain": 0,
+            "rgTrackPeak": 1,
+            "tags": {
+                "copyright": [
+                    "http://creativecommons.org/licenses/by-nc-nd/3.0/"
+                ],
+                "encodedby": [
+                    "Jamendo:http://www.jamendo.com| LAME"
+                ],
+                "genre": [
+                    "smoothjazz"
+                ],
+                "recordlabel": [
+                    "http://www.jamendo.com"
+                ]
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": "17aaSbOlAlhrMGvNYo5Ufa",
+                        "name": "Konstentyn",
+                        "missing": false
+                    }
+                ]
+            },
+            "missing": false,
+            "birthTime": "2025-03-26T22:26:41.02330302Z",
+            "createdAt": "2025-03-26T22:26:41.029394528Z",
+            "updatedAt": "2023-03-10T02:16:28.326313406Z"
+        }
+    ],
+    "EDEConfig": [
+        {
+            "playCount": true,
+            "playDate": true,
+            "starredAt": true,
+            "bookmarkPosition": true,
+            "id": true,
+            "libraryId": true,
+            "libraryPath": true,
+            "libraryName": true,
+            "folderId": true,
+            "path": true,
+            "title": true,
+            "album": true,
+            "artistId": true,
+            "artist": true,
+            "albumArtistId": true,
+            "albumArtist": true,
+            "albumId": true,
+            "hasCoverArt": true,
+            "trackNumber": true,
+            "discNumber": true,
+            "year": true,
+            "date": true,
+            "originalYear": true,
+            "releaseYear": true,
+            "size": true,
+            "suffix": true,
+            "duration": true,
+            "bitRate": true,
+            "sampleRate": true,
+            "bitDepth": true,
+            "channels": true,
+            "genre": true,
+            "genres": [
+                {
+                    "id": true,
+                    "name": true
+                }
+            ],
+            "orderTitle": true,
+            "orderAlbumName": true,
+            "orderArtistName": true,
+            "orderAlbumArtistName": true,
+            "compilation": true,
+            "comment": true,
+            "lyrics": true,
+            "explicitStatus": true,
+            "rgAlbumGain": true,
+            "rgAlbumPeak": true,
+            "rgTrackGain": true,
+            "rgTrackPeak": true,
+            "tags": {
+                "copyright": [
+                    true
+                ],
+                "encodedby": [
+                    true
+                ],
+                "genre": [
+                    true
+                ],
+                "recordlabel": [
+                    true
+                ]
+            },
+            "participants": {
+                "albumartist": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ],
+                "artist": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ],
+                "composer": [
+                    {
+                        "id": true,
+                        "name": true,
+                        "missing": true
+                    }
+                ]
+            },
+            "missing": true,
+            "birthTime": true,
+            "createdAt": true,
+            "updatedAt": true
+        }
+    ]
+}

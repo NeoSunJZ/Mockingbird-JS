@@ -1,0 +1,1056 @@
+{
+    "targetAPI": "/news?page=1",
+    "results": {
+        "id": 43993982,
+        "title": "Ask HN: What's your go-to message queue in 2025?",
+        "points": 36,
+        "user": "enether",
+        "time": 1747309386,
+        "time_ago": "3 days ago",
+        "type": "link",
+        "content": "<p>The space is confusing to say the least.<p>Message queues are usually a core part of any distributed architecture, and the options are endless: Kafka, RabbitMQ, NATS, Redis Streams, SQS, ZeroMQ... and then there&#x27;s the \u201cjust use Postgres\u201d camp for simpler use cases.<p>I\u2019m trying to make sense of the tradeoffs between:<p>- async fire-and-forget pub&#x2F;sub vs. sync RPC-like point to point communication<p>- simple FIFO vs. priority queues and delay queues<p>- intelligent brokers (e.g. RabbitMQ, NATS with filters) vs. minimal brokers (e.g. Kafka\u2019s client-driven model)<p>There&#x27;s also a fair amount of ideology&#x2F;emotional attachment - some folks root for underdogs written in their favorite programming language, others reflexively dismiss anything that&#x27;s not &quot;enterprise-grade&quot;. And of course, vendors are always in the mix trying to steer the conversation toward their own solution.<p>If you\u2019ve built a production system in the last few years:<p>1. What queue did you choose?<p>2. What didn&#x27;t work out?<p>3. Where did you regret adding complexity?<p>4. And if you stuck with a DB-based queue \u2014 did it scale?<p>I\u2019d love to hear war stories, regrets, and opinions.",
+        "url": "item?id=43993982",
+        "comments": [
+            {
+                "id": 44003058,
+                "level": 0,
+                "user": "speedgoose",
+                "time": 1747384516,
+                "time_ago": "2 days ago",
+                "content": "<p>I played with most message queues and I go with RabbitMQ in production.<p>Mostly because it has been very reliable for years in production at a previous company, and doesn\u2019t require babysitting. Its recent versions also has new features that make it is a descent alternative to Kafka if you don\u2019t need to scale to the moon.<p>And the logo is a rabbit.",
+                "comments": [
+                    {
+                        "id": 44019404,
+                        "level": 1,
+                        "user": "swyx",
+                        "time": 1747549624,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>Datadog too. i often wonder how come more companies dont pick cute mascots. gives a logo, makes everyone have warm fuzzies immediately, creates pun opportunities.<p>inb4 &quot;oh but you wont be taken seriously&quot; well... datadog.",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019291,
+                "level": 0,
+                "user": "jolux",
+                "time": 1747548032,
+                "time_ago": "6 hours ago",
+                "content": "<p>Kafka is fairly different from the rest of these \u2014 it\u2019s persistent and designed for high read throughput to multiple simultaneous clients at the same time, as some other commenters have pointed out.<p>We wanted replayability and multiple clients on the same topic, so we evaluated Kafka, but we determined it was too operationally complex for our needs. Persistence was also unnecessary as the data stream already had a separate archiving system and existing clients only needed about 24hr max of context. AWS Kinesis ended up being simpler for our needs and I have nothing but good things to say about it for the most part. Streaming client support in Elixir was not as good as Kafka but writing our own adapter wasn\u2019t too hard.",
+                "comments": []
+            },
+            {
+                "id": 44019303,
+                "level": 0,
+                "user": "KingOfCoders",
+                "time": 1747548136,
+                "time_ago": "6 hours ago",
+                "content": "<p>NATS.io because I&#x27;m using Go, and I can just embed it for one server [0], one binary to deploy with Systemd, but able to split it out when scaling the MVP.<p>[0] <a href=\"https:&#x2F;&#x2F;www.inkmi.com&#x2F;blog&#x2F;how-i-made-inkmi-selfhealing\" rel=\"nofollow\">https:&#x2F;&#x2F;www.inkmi.com&#x2F;blog&#x2F;how-i-made-inkmi-selfhealing</a>",
+                "comments": []
+            },
+            {
+                "id": 44020161,
+                "level": 0,
+                "user": "micvbang",
+                "time": 1747561375,
+                "time_ago": "3 hours ago",
+                "content": "<p>I got tired of the pricing and&#x2F;or complexity of running message queues&#x2F;event brokers, so decided to play around with implementing my own. It utilizes S3 as the source of truth, which makes it orders of magnitude easier to manage and cheaper to run. There&#x27;s an ongoing blog series on the implementation: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;micvbang&#x2F;simple-event-broker\">https:&#x2F;&#x2F;github.com&#x2F;micvbang&#x2F;simple-event-broker</a>",
+                "comments": []
+            },
+            {
+                "id": 44019470,
+                "level": 0,
+                "user": "lmm",
+                "time": 1747550596,
+                "time_ago": "6 hours ago",
+                "content": "<p>SQS is great if you&#x27;re already on AWS - it works and gets out of your way.<p>Kafka is a great tool with lots of very useful properties (not just queues, it can be your primary datastore), but it&#x27;s not operationally simple. If you&#x27;re going to use it you should fully commit to building your whole system on it and accept that you will need to invest in ops at least a little. It&#x27;s not a good fit for a &quot;side&quot; feature on the edge of your system.",
+                "comments": []
+            },
+            {
+                "id": 44019353,
+                "level": 0,
+                "user": "wordofx",
+                "time": 1747548858,
+                "time_ago": "6 hours ago",
+                "content": "<p>Postgres. Doing ~ 70k messages&#x2F;second average. Nothing huge but don\u2019t need anything dedicated yet.",
+                "comments": [
+                    {
+                        "id": 44019616,
+                        "level": 1,
+                        "user": "iamcalledrob",
+                        "time": 1747553034,
+                        "time_ago": "5 hours ago",
+                        "content": "<p>Curious what kind of hardware you&#x27;re using for that 70K&#x2F;s?",
+                        "comments": [
+                            {
+                                "id": 44019699,
+                                "level": 2,
+                                "user": "wordofx",
+                                "time": 1747554328,
+                                "time_ago": "5 hours ago",
+                                "content": "<p>It\u2019s an r8g instance in aws. Can\u2019t remember the size but I think it\u2019s over provisioned because it\u2019s at like 20% utilisation and only spikes to 50.",
+                                "comments": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": 44019364,
+                        "level": 1,
+                        "user": "lawn",
+                        "time": 1747549058,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>I&#x27;m curious on how people use Postgres as a message queue. Do you rely on libraries or do you run a custom implementation?",
+                        "comments": [
+                            {
+                                "id": 44019433,
+                                "level": 2,
+                                "user": "padjo",
+                                "time": 1747549945,
+                                "time_ago": "6 hours ago",
+                                "content": "<p>You can go an awfully long way with just SELECT \u2026 FOR UPDATE \u2026 SKIP LOCKED",
+                                "comments": []
+                            },
+                            {
+                                "id": 44019421,
+                                "level": 2,
+                                "user": "ericaska",
+                                "time": 1747549828,
+                                "time_ago": "6 hours ago",
+                                "content": "<p>We also use Postgres but we don&#x27;t have many jobs. It&#x27;s usually 10-20 squedule that creates hourly-monthly jobs and they are mostly independent. \nCurrently a custom made solution but we are going to update it to use skip locked and use Notify&#x2F;Listen + interval to handle jobs. There is a really good video about it on YouTube called: &quot;Queues in PostgreSQL Citus Con.&quot;",
+                                "comments": []
+                            },
+                            {
+                                "id": 44019689,
+                                "level": 2,
+                                "user": "wordofx",
+                                "time": 1747554141,
+                                "time_ago": "5 hours ago",
+                                "content": "<p>Just select for update skipped locked. Table is partitioned to keep unprocessed small.",
+                                "comments": []
+                            },
+                            {
+                                "id": 44019417,
+                                "level": 2,
+                                "user": "digianarchist",
+                                "time": 1747549779,
+                                "time_ago": "6 hours ago",
+                                "content": "<p>pgmq <a href=\"https:&#x2F;&#x2F;github.com&#x2F;pgmq&#x2F;pgmq\">https:&#x2F;&#x2F;github.com&#x2F;pgmq&#x2F;pgmq</a>",
+                                "comments": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 44019341,
+                "level": 0,
+                "user": "bilinguliar",
+                "time": 1747548660,
+                "time_ago": "6 hours ago",
+                "content": "<p>I am using Beanstalkd, it is small and fast and you just apt-get it on Debian.<p>However, I have noticed that oftentimes devs are using queues where Workflow Engines would be a better fit.<p>If your message processing time is in tens of seconds \u2013 talk to your local Workflow Engine professional (:",
+                "comments": [
+                    {
+                        "id": 44019401,
+                        "level": 1,
+                        "user": "dkh",
+                        "time": 1747549583,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>A classic. Not something I personally use these days, but I think just as a piece of software it is an eternally good example of something simple, powerful, well-engineered, pleasant to use, and widely-compatible, all at the same time",
+                        "comments": []
+                    },
+                    {
+                        "id": 44019522,
+                        "level": 1,
+                        "user": "janstice",
+                        "time": 1747551437,
+                        "time_ago": "5 hours ago",
+                        "content": "<p>In that case, any suggestions if the answer was looking for workflow engines? Ideally something that will work for no-person-in-the-middle workloads in the tens of seconds range as well as person-making-a-decision workflows that can live for anywhere between minutes and months?",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019727,
+                "level": 0,
+                "user": "adamcharnock",
+                "time": 1747554784,
+                "time_ago": "4 hours ago",
+                "content": "<p>I would highlight a distinction between Queues and Streams, as I think this is an important factor in making this choice.<p>In the case of a queue, you put an item in the queue, and then something removes it later. There is a single flow of items. They are put in. They are taken out.<p>In the case of a stream, you put an item in the queue, then it can be removed multiple times by any other process that cares to do so. This may be called &#x27;fan out&#x27;.<p>This is an important distinction and really effects how one designs software that uses these systems. Queues work just fine for, say, background jobs. A user signs up, and you put a task in the &#x27;send_registration_email&#x27; queue.[1]<p>However, what if some _other_ system then cares about user sign ups? Well, you have to add another queue, and the user sign-up code needs to be aware of it. For example, a &#x27;add_user_to_crm&#x27; queue.<p>The result here is that choosing a queue early on leads to a tight-coupling of services down the road.<p>The alternative is to choose streams. In this case, instead of saying what _should_ happen, you say what _did_ happen (past tense). Here you replace &#x27;send_registration_email&#x27; and &#x27;add_user_to_crm&#x27; with a single stream called &#x27;used_registered&#x27;. Each service that cares about this fact is then free to subscribe to that steam and get its own copy of the events (it does so via a &#x27;consumer group&#x27;, or something of a similar name).<p>This results in a more loosely coupled system, where you potentially also have access to an event history should you need it (if you configure your broker to keep the events around).<p>--<p>This is where Postgresql and SQS tend to fall down. I&#x27;ve yet to hear of an implementation of streams in Postgresql[2]. And SQS is inherently a queue.<p>I therefore normally reach for Redis Steams, but mostly because it is what I am familiar with.<p>Note: This line of thinking leads into Domain Driven Design, CQRS, and Event Sourcing. Each of which is interesting and certainly has useful things to offer, although I would advise against simply consuming any of them wholesale.<p>[1] Although this is my go-to example, I&#x27;m actually unconvinced that email sending should be done via a queue. Email is just a sequence of queues anyway.<p>[2] If you know of one please tell me!",
+                "comments": [
+                    {
+                        "id": 44020272,
+                        "level": 1,
+                        "user": "vlvdus",
+                        "time": 1747563101,
+                        "time_ago": "2 hours ago",
+                        "content": "<p>What makes Postgres (or any decent relational DB) fall down in this case?",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 43998178,
+                "level": 0,
+                "user": "AznHisoka",
+                "time": 1747335587,
+                "time_ago": "3 days ago",
+                "content": "<p>Sidekiq, Sidekiq, Sidekiq (or just Postgres if Im dealing with something trivial)",
+                "comments": []
+            },
+            {
+                "id": 44003001,
+                "level": 0,
+                "user": "austin-cheney",
+                "time": 1747383965,
+                "time_ago": "2 days ago",
+                "content": "<p>I have so far gotten by plenty well writing my own queue systems to fit the needs of the consuming application. Normally the only place where I need queue systems is in distributed systems with rapid fire transmissions to ensure messages hit the network in time sequence order. The additional benefit is that network traffic is saved in order when the current network socket fails so that nothing is lost but time.",
+                "comments": []
+            },
+            {
+                "id": 44019403,
+                "level": 0,
+                "user": "crmd",
+                "time": 1747549603,
+                "time_ago": "6 hours ago",
+                "content": "<p>The US Federal Reserve uses IBM MQ for the FedNow interbank settlement service that went live last year.<p>Architecture info: <a href=\"https:&#x2F;&#x2F;explore.fednow.org&#x2F;resources&#x2F;technical-overview-guide.pdf\" rel=\"nofollow\">https:&#x2F;&#x2F;explore.fednow.org&#x2F;resources&#x2F;technical-overview-guid...</a>",
+                "comments": [
+                    {
+                        "id": 44019452,
+                        "level": 1,
+                        "user": "kev009",
+                        "time": 1747550378,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>Likely implies z&#x2F;OS is common on both sides. Given the stakes and availability needs not a bad choice.",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44006992,
+                "level": 0,
+                "user": "Jemaclus",
+                "time": 1747411164,
+                "time_ago": "2 days ago",
+                "content": "<p>For large applications in a service-oriented architecture, I leverage Kafka 100% of the time. With Confluent Cloud and Amazon MSK, infra is relatively trivial to maintain. There&#x27;s really no reason to use anything else for this.<p>For smaller projects of &quot;job queues,&quot; I tend to use Amazon SQS or RabbitMQ.<p>But just for clarity, Kafka is not really a message queue -- it&#x27;s a persistent structured log that can be used as a message queue. More specifically, you can replay messages by resetting the offset. In a queue, the idea is once you pop an item off the queue, it&#x27;s no longer in the queue and therefore is gone once it&#x27;s consumed, but with Kafka, you&#x27;re leaving the message where it is and moving an offset instead. This means, for example, that you can have many many clients read from the same topic without issue.<p>SQS and other MQs don&#x27;t have that persistence -- once you consume the message and ack, the message disappears and you can&#x27;t &quot;replay it&quot; via the queue system. You have to re-submit the message to process it. This means you can really only have one client per topic, because once the message is consumed, it&#x27;s no longer available to anyone else.<p>There are pros and cons to either mechanism, and there&#x27;s significant overlap in the usage of the two systems, but they are designed to serve different purposes.<p>The analogy I tend to use is that Kafka is like reading a book. You read a page, you turn the page. But if you get confused, you can flip back and reread a previous page. An MQ like RabbitMQ or Sidekiq is more like the line at the grocery store: once the customer pays, they walk out and they&#x27;re gone. You can&#x27;t go back and re-process their cart.<p>Again, pros and cons to both approaches.<p>&quot;What didn&#x27;t work out?&quot; -- I&#x27;ve learned in my career that, in general, I really like replayability, so Kafka is typically my first choice, unless I know that re-creating the messages are trivial, in which case I am more inclined to lean toward RabbitMQ or SQS. I&#x27;ve been bitten several times by MQs where I can&#x27;t easily recreate the queue, and I lose critical messages.<p>&quot;Where did you regret adding complexity?&quot; -- Again, smaller systems that are just &quot;job queues&quot; (versus service-to-service async communication) don&#x27;t need a whole lot of complexity. So I&#x27;ve learned that if it&#x27;s a small system, go with an MQ first (any of them are fine), and go with Kafka only if you start scaling beyond a single simple system.<p>&quot;And if you stuck with a DB-based queue -- did it scale?&quot; -- I&#x27;ve done this in the past. It scales until it doesn&#x27;t. Given my experience with MQs and Kafka, I feel it&#x27;s a trivial amount of work to set up an MQ&#x2F;Kafka, and I don&#x27;t get anything extra by using a DB-based queue. I personally would avoid these, unless you have a compelling reason to use it (eg, your DB isn&#x27;t huge, and you can save money).",
+                "comments": [
+                    {
+                        "id": 44019302,
+                        "level": 1,
+                        "user": "michaelmior",
+                        "time": 1747548133,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>&gt; This means you can really only have one client per topic, because once the message is consumed, it&#x27;s no longer available to anyone else.<p>It depends on your use case (or maybe what you mean by &quot;client&quot;). If I just have a bunch of messages that need to be processed by &quot;some&quot; client, then having the message disappear once a client has processed it is exactly what you want.",
+                        "comments": []
+                    },
+                    {
+                        "id": 44019334,
+                        "level": 1,
+                        "user": "mlhpdx",
+                        "time": 1747548618,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>We build applications very differently. SQS queues with 1000s of clients have been a go to for me for over a decade. And the opposite as well \u2014 1000s of queues (one per client device, they\u2019re free). Zero maintenance, zero cost when unused. Absurd scalability.",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019489,
+                "level": 0,
+                "user": "csomar",
+                "time": 1747550863,
+                "time_ago": "6 hours ago",
+                "content": "<p>Another option to consider: Cloudflare Workers. They have a simple queue but you&#x27;ll need to patch it with a Worker anyway. This means you can programatically manage the queue through the worker and also it makes it easy to send&#x2F;receive HTTP requests.",
+                "comments": []
+            },
+            {
+                "id": 44019276,
+                "level": 0,
+                "user": "dmazin",
+                "time": 1747547796,
+                "time_ago": "6 hours ago",
+                "content": "<p>No one ever seems to use it, but for AMPQ I like Beanstalkd. It\u2019s fast, stable and has not failed me under high RPS.",
+                "comments": [
+                    {
+                        "id": 44019320,
+                        "level": 1,
+                        "user": "bilinguliar",
+                        "time": 1747548334,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>This is my go-to solution as well. It is great, but utilizes just one CPU core. But if this the problem, then your business is already booming.",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019361,
+                "level": 0,
+                "user": "MyOutfitIsVague",
+                "time": 1747548992,
+                "time_ago": "6 hours ago",
+                "content": "<p>For my extremely specialized case, I use a SQLite database as a message queue. It absolutely wouldn&#x27;t scale, but it doesn&#x27;t need to. It works extremely well for what I need it to do.",
+                "comments": [
+                    {
+                        "id": 44019882,
+                        "level": 1,
+                        "user": "pdimitar",
+                        "time": 1747557272,
+                        "time_ago": "4 hours ago",
+                        "content": "<p>Have you written up about it? I&#x27;d <i>love</i> to read it if so. Thought of using SQLite several times like this but never mustered the courage to try.",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019464,
+                "level": 0,
+                "user": "vanbashan",
+                "time": 1747550509,
+                "time_ago": "6 hours ago",
+                "content": "<p>I prefer pulsar. Elegant modular design and fully open source ecosystem.<p>Performance is at least as good as Kafka.<p>For simpler workload, beanstalkd could be a good fit, either.",
+                "comments": []
+            },
+            {
+                "id": 43994032,
+                "level": 0,
+                "user": "a_void_sky",
+                "time": 1747309874,
+                "time_ago": "3 days ago",
+                "content": "<p>Kafka for communication between microservices, and MQTT (VerneMQ) for IOT devices",
+                "comments": [
+                    {
+                        "id": 43994895,
+                        "level": 1,
+                        "user": "toomuchtodo",
+                        "time": 1747315915,
+                        "time_ago": "3 days ago",
+                        "content": "<p>What are your thoughts on Apache Pulsar vs Kafka?",
+                        "comments": []
+                    },
+                    {
+                        "id": 43995508,
+                        "level": 1,
+                        "user": "oulipo",
+                        "time": 1747319568,
+                        "time_ago": "3 days ago",
+                        "content": "<p>I&#x27;m hesitating with EMQx, have you tried it? why did you choose VerneMQ?",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 43998576,
+                "level": 0,
+                "user": "clark-kent",
+                "time": 1747338260,
+                "time_ago": "3 days ago",
+                "content": "<p>SQS. For Ruby apps I use Shoryuken with SQS.",
+                "comments": []
+            },
+            {
+                "id": 44018500,
+                "level": 0,
+                "user": "tacostakohashi",
+                "time": 1747535066,
+                "time_ago": "10 hours ago",
+                "content": "<p>UUCP",
+                "comments": [
+                    {
+                        "id": 44019268,
+                        "level": 1,
+                        "user": "RedShift1",
+                        "time": 1747547707,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>People will call me crazy but why not SMTP for message queueing?",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019457,
+                "level": 0,
+                "user": "kabes",
+                "time": 1747550438,
+                "time_ago": "6 hours ago",
+                "content": "<p>Maybe start by explaining what you want to use it for?",
+                "comments": []
+            },
+            {
+                "id": 44019373,
+                "level": 0,
+                "user": "MichaelMoser123",
+                "time": 1747549163,
+                "time_ago": "6 hours ago",
+                "content": "<p>using zeebe&#x2F;Camunda at work. The system gives you a way of designing and partitioning message-based workflows. It has a very thorough design.",
+                "comments": [
+                    {
+                        "id": 44019448,
+                        "level": 1,
+                        "user": "kabes",
+                        "time": 1747550340,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>We had a lot of reliability isdues with zeebe&#x2F;camunda (granted we started using it at version 0.10), and now they also rugulled the free version. So I would never go near that company again.",
+                        "comments": [
+                            {
+                                "id": 44019594,
+                                "level": 2,
+                                "user": "MichaelMoser123",
+                                "time": 1747552740,
+                                "time_ago": "5 hours ago",
+                                "content": "<p>reliability is much better now, as far as i can tell.",
+                                "comments": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 43996677,
+                "level": 0,
+                "user": "nop_slide",
+                "time": 1747326644,
+                "time_ago": "3 days ago",
+                "content": "<p>Solid queue in rails",
+                "comments": []
+            },
+            {
+                "id": 43998606,
+                "level": 0,
+                "user": "ok1984",
+                "time": 1747338442,
+                "time_ago": "3 days ago",
+                "content": "<p>Surprised no body is mentioning ActiveMQ!",
+                "comments": []
+            },
+            {
+                "id": 44019235,
+                "level": 0,
+                "user": "z3ugma",
+                "time": 1747547036,
+                "time_ago": "7 hours ago",
+                "content": "<p>Does Google Cloud Tasks count?",
+                "comments": []
+            },
+            {
+                "id": 44019296,
+                "level": 0,
+                "user": "mlhpdx",
+                "time": 1747548069,
+                "time_ago": "6 hours ago",
+                "content": "<p>SQS",
+                "comments": []
+            },
+            {
+                "id": 44019630,
+                "level": 0,
+                "user": "DonHopkins",
+                "time": 1747553273,
+                "time_ago": "5 hours ago",
+                "content": "<p>What do people think of Supabase?",
+                "comments": [
+                    {
+                        "id": 44020555,
+                        "level": 1,
+                        "user": "RedShift1",
+                        "time": 1747568138,
+                        "time_ago": "42 minutes ago",
+                        "content": "<p>It&#x27;s not a message queue?",
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": 44019456,
+                "level": 0,
+                "user": "stephenr",
+                "time": 1747550435,
+                "time_ago": "6 hours ago",
+                "content": "<p>I&#x27;ve used Qless for several years;<p>For those unfamiliar, it&#x27;s a Lua library that gets executed in Redis using one of the various language bindings (which are essentially wrappers around calling the Lua methods).<p>With our multi-node redis setup it seems to be quite reliable.",
+                "comments": []
+            },
+            {
+                "id": 44019252,
+                "level": 0,
+                "user": "catkitcourt",
+                "time": 1747547475,
+                "time_ago": "6 hours ago",
+                "content": "<p>Pulsar",
+                "comments": []
+            },
+            {
+                "id": 43998310,
+                "level": 0,
+                "user": "varbhat",
+                "time": 1747336455,
+                "time_ago": "3 days ago",
+                "content": "<p>NATS",
+                "comments": [
+                    {
+                        "id": 44019283,
+                        "level": 1,
+                        "user": "RedShift1",
+                        "time": 1747547915,
+                        "time_ago": "6 hours ago",
+                        "content": "<p>I use NATS too! It has worked very well for me, using it to collect data from IoT devices. I don&#x27;t really like all the other bits they tacked on like jetstream and object store, that seems beyond its scope. Subject authorization is also painful to implement. But runtime behaviour has been flawless for me.",
+                        "comments": [
+                            {
+                                "id": 44019903,
+                                "level": 2,
+                                "user": "pdimitar",
+                                "time": 1747557557,
+                                "time_ago": "4 hours ago",
+                                "content": "<p>Do you have any links explaining the subject authorization? I have recommended NATS for a project that got scrapped.",
+                                "comments": [
+                                    {
+                                        "id": 44020481,
+                                        "level": 3,
+                                        "user": "RedShift1",
+                                        "time": 1747567011,
+                                        "time_ago": "an hour ago",
+                                        "content": "<p>Docs: <a href=\"https:&#x2F;&#x2F;docs.nats.io&#x2F;running-a-nats-service&#x2F;configuration&#x2F;securing_nats&#x2F;auth_callout\" rel=\"nofollow\">https:&#x2F;&#x2F;docs.nats.io&#x2F;running-a-nats-service&#x2F;configuration&#x2F;se...</a><p>Example: <a href=\"https:&#x2F;&#x2F;natsbyexample.com&#x2F;examples&#x2F;auth&#x2F;callout&#x2F;java\" rel=\"nofollow\">https:&#x2F;&#x2F;natsbyexample.com&#x2F;examples&#x2F;auth&#x2F;callout&#x2F;java</a>",
+                                        "comments": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 44003712,
+                "level": 0,
+                "user": "revskill",
+                "time": 1747391437,
+                "time_ago": "2 days ago",
+                "content": "<p>A cron job did thd work.",
+                "comments": []
+            }
+        ],
+        "comments_count": 55
+    },
+    "EDEConfig": {
+        "id": false,
+        "title": false,
+        "points": false,
+        "user": false,
+        "time": true,
+        "time_ago": false,
+        "type": false,
+        "content": false,
+        "comments": [
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": [
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": [
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            },
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            },
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            },
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    },
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    },
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    },
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": [
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": []
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": [
+                    {
+                        "id": true,
+                        "level": true,
+                        "user": false,
+                        "time": true,
+                        "time_ago": false,
+                        "content": false,
+                        "comments": [
+                            {
+                                "id": true,
+                                "level": true,
+                                "user": false,
+                                "time": true,
+                                "time_ago": false,
+                                "content": false,
+                                "comments": [
+                                    {
+                                        "id": true,
+                                        "level": true,
+                                        "user": false,
+                                        "time": true,
+                                        "time_ago": false,
+                                        "content": false,
+                                        "comments": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": true,
+                "level": true,
+                "user": false,
+                "time": true,
+                "time_ago": false,
+                "content": false,
+                "comments": []
+            }
+        ],
+        "comments_count": false
+    }
+}

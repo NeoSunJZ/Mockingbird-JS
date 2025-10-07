@@ -1,0 +1,245 @@
+{
+    "targetAPI": "/answer/api/v1/question/page?page_size=20&page=1&order=newest",
+    "results": {
+        "code": 200,
+        "reason": "base.success",
+        "msg": "\u6210\u529f\u3002",
+        "data": {
+            "count": 3,
+            "list": [
+                {
+                    "id": "10010000000000020",
+                    "created_at": 1747657835,
+                    "title": "\u8fd9\u662f\u4e00\u4e2a\u6d4b\u8bd5\u95ee\u9898",
+                    "url_title": "zhe-shi-yi-ge-ce-shi-wen-ti",
+                    "description": "\u6d4b\u8bd5\u95ee\u9898\u7684\u5185\u5bb9",
+                    "pin": 1,
+                    "show": 1,
+                    "status": 1,
+                    "tags": [
+                        {
+                            "slug_name": "\u6d4b\u8bd5",
+                            "display_name": "\u6d4b\u8bd5",
+                            "main_tag_slug_name": "",
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": 1,
+                    "unique_view_count": 0,
+                    "vote_count": 0,
+                    "answer_count": 0,
+                    "collection_count": 0,
+                    "follow_count": 0,
+                    "accepted_answer_id": "0",
+                    "last_answer_id": "0",
+                    "operated_at": 1747657835,
+                    "operator": {
+                        "id": "1",
+                        "username": "sumorile",
+                        "rank": 1,
+                        "display_name": "sumorile",
+                        "status": "normal",
+                        "avatar": "https://www.gravatar.com/avatar/96eec371c20b5e6fe9a7000886b881578475d6a674e0ee33f16e18a3ebcfb1f4"
+                    },
+                    "operation_type": "asked"
+                },
+                {
+                    "id": "10010000000000002",
+                    "created_at": 1747657688,
+                    "title": "What is a tag?",
+                    "url_title": "what-is-a-tag",
+                    "description": "When asking a question, we need to choose tags. What are tags and why should I use them?",
+                    "pin": 1,
+                    "show": 1,
+                    "status": 1,
+                    "tags": [
+                        {
+                            "slug_name": "support",
+                            "display_name": "support",
+                            "main_tag_slug_name": "",
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": 0,
+                    "unique_view_count": 0,
+                    "vote_count": 0,
+                    "answer_count": 1,
+                    "collection_count": 0,
+                    "follow_count": 0,
+                    "accepted_answer_id": "0",
+                    "last_answer_id": "10020000000000003",
+                    "operated_at": 1747657688,
+                    "operator": {
+                        "id": "1",
+                        "username": "sumorile",
+                        "rank": 1,
+                        "display_name": "sumorile",
+                        "status": "normal",
+                        "avatar": "https://www.gravatar.com/avatar/96eec371c20b5e6fe9a7000886b881578475d6a674e0ee33f16e18a3ebcfb1f4"
+                    },
+                    "operation_type": "asked"
+                },
+                {
+                    "id": "10010000000000004",
+                    "created_at": 1747657688,
+                    "title": "What is reputation and how do I earn them?",
+                    "url_title": "what-is-reputation-and-how-do-i-earn-them",
+                    "description": "I see that each user has reputation points, What is it and how do I earn them?",
+                    "pin": 1,
+                    "show": 1,
+                    "status": 1,
+                    "tags": [
+                        {
+                            "slug_name": "support",
+                            "display_name": "support",
+                            "main_tag_slug_name": "",
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": 1,
+                    "unique_view_count": 0,
+                    "vote_count": 0,
+                    "answer_count": 1,
+                    "collection_count": 0,
+                    "follow_count": 0,
+                    "accepted_answer_id": "0",
+                    "last_answer_id": "10020000000000005",
+                    "operated_at": 1747657688,
+                    "operator": {
+                        "id": "1",
+                        "username": "sumorile",
+                        "rank": 1,
+                        "display_name": "sumorile",
+                        "status": "normal",
+                        "avatar": "https://www.gravatar.com/avatar/96eec371c20b5e6fe9a7000886b881578475d6a674e0ee33f16e18a3ebcfb1f4"
+                    },
+                    "operation_type": "asked"
+                }
+            ]
+        }
+    },
+    "EDEConfig": {
+        "code": true,
+        "reason": true,
+        "msg": true,
+        "data": {
+            "count": false,
+            "list": [
+                {
+                    "id": false,
+                    "created_at": false,
+                    "title": false,
+                    "url_title": false,
+                    "description": false,
+                    "pin": false,
+                    "show": false,
+                    "status": false,
+                    "tags": [
+                        {
+                            "slug_name": false,
+                            "display_name": false,
+                            "main_tag_slug_name": false,
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": false,
+                    "unique_view_count": false,
+                    "vote_count": false,
+                    "answer_count": false,
+                    "collection_count": false,
+                    "follow_count": false,
+                    "accepted_answer_id": false,
+                    "last_answer_id": false,
+                    "operated_at": true,
+                    "operator": {
+                        "id": false,
+                        "username": false,
+                        "rank": false,
+                        "display_name": false,
+                        "status": false,
+                        "avatar": false
+                    },
+                    "operation_type": false
+                },
+                {
+                    "id": false,
+                    "created_at": false,
+                    "title": false,
+                    "url_title": true,
+                    "description": false,
+                    "pin": false,
+                    "show": false,
+                    "status": false,
+                    "tags": [
+                        {
+                            "slug_name": false,
+                            "display_name": false,
+                            "main_tag_slug_name": false,
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": false,
+                    "unique_view_count": false,
+                    "vote_count": false,
+                    "answer_count": false,
+                    "collection_count": false,
+                    "follow_count": false,
+                    "accepted_answer_id": false,
+                    "last_answer_id": false,
+                    "operated_at": true,
+                    "operator": {
+                        "id": false,
+                        "username": false,
+                        "rank": false,
+                        "display_name": false,
+                        "status": false,
+                        "avatar": false
+                    },
+                    "operation_type": false
+                },
+                {
+                    "id": false,
+                    "created_at": false,
+                    "title": false,
+                    "url_title": true,
+                    "description": false,
+                    "pin": false,
+                    "show": false,
+                    "status": false,
+                    "tags": [
+                        {
+                            "slug_name": false,
+                            "display_name": false,
+                            "main_tag_slug_name": false,
+                            "recommend": false,
+                            "reserved": false
+                        }
+                    ],
+                    "view_count": false,
+                    "unique_view_count": false,
+                    "vote_count": false,
+                    "answer_count": false,
+                    "collection_count": false,
+                    "follow_count": false,
+                    "accepted_answer_id": false,
+                    "last_answer_id": false,
+                    "operated_at": true,
+                    "operator": {
+                        "id": false,
+                        "username": false,
+                        "rank": false,
+                        "display_name": false,
+                        "status": false,
+                        "avatar": false
+                    },
+                    "operation_type": false
+                }
+            ]
+        }
+    }
+}

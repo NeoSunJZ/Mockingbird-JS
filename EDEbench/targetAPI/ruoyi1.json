@@ -1,0 +1,93 @@
+{
+    "targetAPI": "/system/dept/list",
+    "results": {
+        "total": 2,
+        "rows": [
+            {
+                "createBy": null,
+                "createTime": "2025-05-26 11:03:50",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u8d85\u7ea7\u7ba1\u7406\u5458",
+                "roleId": 1,
+                "roleName": "\u8d85\u7ea7\u7ba1\u7406\u5458",
+                "roleKey": "admin",
+                "roleSort": "1",
+                "dataScope": "1",
+                "status": "0",
+                "delFlag": "0",
+                "flag": false,
+                "menuIds": null,
+                "deptIds": null,
+                "permissions": null,
+                "admin": true
+            },
+            {
+                "createBy": null,
+                "createTime": "2025-05-26 11:03:50",
+                "updateBy": null,
+                "updateTime": null,
+                "remark": "\u666e\u901a\u89d2\u8272",
+                "roleId": 2,
+                "roleName": "\u666e\u901a\u89d2\u8272",
+                "roleKey": "common",
+                "roleSort": "2",
+                "dataScope": "2",
+                "status": "0",
+                "delFlag": "0",
+                "flag": false,
+                "menuIds": null,
+                "deptIds": null,
+                "permissions": null,
+                "admin": false
+            }
+        ],
+        "code": 0,
+        "msg": null
+    },
+    "EDEConfig": {
+        "total": false,
+        "rows": [
+            {
+                "createBy": null,
+                "createTime": false,
+                "updateBy": false,
+                "updateTime": null,
+                "remark": true,
+                "roleId": false,
+                "roleName": false,
+                "roleKey": false,
+                "roleSort": false,
+                "dataScope": false,
+                "status": false,
+                "delFlag": true,
+                "flag": true,
+                "menuIds": null,
+                "deptIds": null,
+                "permissions": null,
+                "admin": true
+            },
+            {
+                "createBy": null,
+                "createTime": false,
+                "updateBy": false,
+                "updateTime": null,
+                "remark": true,
+                "roleId": false,
+                "roleName": false,
+                "roleKey": false,
+                "roleSort": false,
+                "dataScope": false,
+                "status": false,
+                "delFlag": true,
+                "flag": true,
+                "menuIds": null,
+                "deptIds": null,
+                "permissions": null,
+                "admin": true
+            }
+        ],
+        "code": false,
+        "msg": null
+    }
+}

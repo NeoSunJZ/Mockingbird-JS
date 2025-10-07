@@ -1,0 +1,147 @@
+{
+    "targetAPI": "/answer/api/v1/tags/page?page=1&page_size=20&query_cond=popular",
+    "results": {
+        "code": 200,
+        "reason": "base.success",
+        "msg": "成功。",
+        "data": {
+            "count": 2,
+            "list": [
+                {
+                    "object_type": "question",
+                    "object": {
+                        "id": "10010000000000002",
+                        "question_id": "10010000000000002",
+                        "title": "What is a tag?",
+                        "url_title": "what-is-a-tag",
+                        "excerpt": "When asking a question, we need to choose tags. What are tags and why should I use them?",
+                        "created_at": 1747657688,
+                        "vote_count": 0,
+                        "accepted": false,
+                        "answer_count": 1,
+                        "user_info": {
+                            "id": "1",
+                            "username": "sumorile",
+                            "display_name": "sumorile",
+                            "rank": 1,
+                            "status": "normal"
+                        },
+                        "tags": [
+                            {
+                                "slug_name": "support",
+                                "display_name": "support",
+                                "main_tag_slug_name": "",
+                                "recommend": false,
+                                "reserved": false
+                            }
+                        ],
+                        "status": "available"
+                    }
+                },
+                {
+                    "object_type": "question",
+                    "object": {
+                        "id": "10010000000000004",
+                        "question_id": "10010000000000004",
+                        "title": "What is reputation and how do I earn them?",
+                        "url_title": "what-is-reputation-and-how-do-i-earn-them",
+                        "excerpt": "I see that each user has reputation points, What is it and how do I earn them?",
+                        "created_at": 1747657688,
+                        "vote_count": 0,
+                        "accepted": false,
+                        "answer_count": 1,
+                        "user_info": {
+                            "id": "1",
+                            "username": "sumorile",
+                            "display_name": "sumorile",
+                            "rank": 1,
+                            "status": "normal"
+                        },
+                        "tags": [
+                            {
+                                "slug_name": "support",
+                                "display_name": "support",
+                                "main_tag_slug_name": "",
+                                "recommend": false,
+                                "reserved": false
+                            }
+                        ],
+                        "status": "available"
+                    }
+                }
+            ]
+        }
+    },
+    "EDEConfig": {
+        "code": true,
+        "reason": true,
+        "msg": true,
+        "data": {
+            "count": false,
+            "list": [
+                {
+                    "object_type": false,
+                    "object": {
+                        "id": false,
+                        "question_id": false,
+                        "title": false,
+                        "url_title": false,
+                        "excerpt": false,
+                        "created_at": false,
+                        "vote_count": false,
+                        "accepted": false,
+                        "answer_count": false,
+                        "user_info": {
+                            "id": false,
+                            "username": false,
+                            "display_name": false,
+                            "rank": false,
+                            "status": false
+                        },
+                        "tags": [
+                            {
+                                "slug_name": false,
+                                "display_name": false,
+                                "main_tag_slug_name": false,
+                                "recommend": false,
+                                "reserved": false
+                            }
+                        ],
+                        "status": false
+                    }
+                },
+                {
+                    "object_type": false,
+                    "object": {
+                        "id": false,
+                        "question_id": false,
+                        "title": false,
+                        "url_title": false,
+                        "excerpt": false,
+                        "created_at": false,
+                        "vote_count": false,
+                        "accepted": false,
+                        "answer_count": false,
+                        "user_info": {
+                            "id": false,
+                            "username": false,
+                            "display_name": false,
+                            "rank": false,
+                            "status": false
+                        },
+                        "tags": [
+                            {
+                                "slug_name": false,
+                                "display_name": false,
+                                "main_tag_slug_name": false,
+                                "recommend": false,
+                                "reserved": false
+                            }
+                        ],
+                        "status": false
+                    }
+                }
+            ]
+        }
+    }
+}
