@@ -21,3 +21,18 @@ test('DOM sinks retain source through detached nodes and unbox native values',as
     assert.ok(result.sinks.some(s=>s.sink==='checked' && s.from[0].endsWith(':/flag')));
   } finally {await browser.close();}
 });
+test('ignored nodeValue writes and replaced detached text do not create stale sinks',async()=>{
+  const browser=await chromium.launch({headless:true});
+  try {
+    const page=await browser.newPage();await page.evaluate(injected,{});
+    const result=await page.evaluate(()=>{
+      const t=__mockingbird;const value=t.source('secret');
+      const div=document.createElement('div');document.body.appendChild(div);
+      div.nodeValue=value; // Native no-op on Element.
+      const text=document.createTextNode(value);text.data='public';div.appendChild(text);
+      const other=document.createElement('div');other.textContent=value;other.firstChild.nodeValue='public';div.appendChild(other);
+      return {text:div.textContent,sinks:t.events.filter(e=>e.kind==='sink')};
+    });
+    assert.equal(result.text,'publicpublic');assert.equal(result.sinks.length,0);
+  } finally {await browser.close();}
+});

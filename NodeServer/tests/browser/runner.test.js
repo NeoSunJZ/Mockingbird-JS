@@ -10,9 +10,11 @@ const {runScenario}=require('../../ede-killer');
 test('full runner performs baseline, rewrites mjs and converges without repeating side effects',async()=>{
   const server=http.createServer((req,res)=>{
     if(req.url==='/api'){res.setHeader('content-type','application/json');res.end('{"n":2,"flag":false}');return;}
-    if(req.url==='/app.mjs'){
+    if(req.url==='/app.mjs'){res.writeHead(302,{location:'/modules/app.mjs'});res.end();return;}
+    if(req.url==='/modules/value.mjs'){res.setHeader('content-type','application/javascript');res.end('export const increment=1;');return;}
+    if(req.url==='/modules/app.mjs'){
       res.setHeader('content-type','application/javascript');
-      res.end('const data=await (await fetch("/api")).json();let count=0;const value={get n(){count++;return data.n;}};const derived=value.n+1;document.querySelector("#app").textContent=(data.flag?"bad":"ok")+":"+derived+":"+count;');return;
+      res.end('import {increment} from "./value.mjs";const data=await (await fetch("/api")).json();let count=0;const value={get n(){count++;return data.n;}};const derived=value.n+increment;document.querySelector("#app").textContent=(data.flag?"bad":"ok")+":"+derived+":"+count;');return;
     }
     res.end('<!doctype html><div id="app"></div><script type="module" src="/app.mjs"></script>');
   });
@@ -26,7 +28,7 @@ test('full runner performs baseline, rewrites mjs and converges without repeatin
     assert.notEqual(result.reason,'max-rounds',JSON.stringify(result));
     assert.ok(result.cycles.every(c=>c.matchesBaseline!==false),JSON.stringify(result));
     assert.ok(result.cycles.length>=3,JSON.stringify(result));
-    assert.ok(result.scripts[0].generation>0);
+    assert.ok(result.scripts.some(script=>script.generation>0));
     assert.ok((await fs.readdir(output)).includes('summary.json'));
   } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });

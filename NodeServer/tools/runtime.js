@@ -4,6 +4,8 @@ function createTraceRuntime(host, options = {}) {
   const objectProxies = new WeakMap();
   const functionProxies = new WeakMap();
   const contexts = [];
+  const conversions = new Set([Boolean, Number, String, BigInt]);
+  const objectIs = Object.is;
   const pending = new Set();
   const events = [];
   const failures = [];
@@ -206,6 +208,9 @@ function createTraceRuntime(host, options = {}) {
   }
   const runtime = {
     source, raw, capture, meta, labels, gap, emit,
+    builtin(fn, receiver, args) {
+      return Reflect.apply(fn, receiver, conversions.has(fn) || fn === objectIs ? args.map(raw) : args);
+    },
     key(value) { return Reflect.ownKeys({ [raw(value)]: 0 })[0]; },
     condition(value) { observe('control', labels(value), { valueId: meta(value)?.valueId }); return !!raw(value); },
     sink(kind, value, detail = {}) {

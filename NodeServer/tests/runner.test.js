@@ -35,3 +35,11 @@ test('script identity isolates same basenames, query variants and changed source
     assert.equal(store.manifest().length,4);
   } finally {await fs.rm(dir,{recursive:true,force:true});}
 });
+test('quoted action arguments, inspection commands and invalid waits are handled explicitly',async()=>{
+  const seen=[];const page={context:()=>({cookies:async()=>[{name:'a',value:'b'}]}),
+    fill:async(...args)=>seen.push(args)};
+  await executeCommands(page,['INPUT "//input[@name=\'full name\']" "Alice Smith"','GET_COOKIES'],{onResult:r=>seen.push(r)});
+  assert.deepEqual(seen[0],["xpath=//input[@name='full name']",'Alice Smith']);
+  assert.equal(seen[1].value[0].name,'a');
+  await assert.rejects(executeCommands(page,['SLEEP nope']),/nonnegative/);
+});

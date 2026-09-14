@@ -1,10 +1,14 @@
 // const { chromium, firefox, webkit } = require("playwright");
 // not tested
-async function executeCommands(page, commands) {
+async function executeCommands(page, commands, options = {}) {
   const context = page.context();
   for (let commandIndex = 0; commandIndex < commands.length; commandIndex++) {
     const raw = commands[commandIndex];
-    const parts = raw.trim().split(/\s+/);
+    const parts = (raw.trim().match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s]+/g) || []).map(token => {
+      if (token.startsWith('"') && token.endsWith('"')) return token.slice(1,-1).replace(/\\(["\\])/g, '$1');
+      if (token.startsWith("'") && token.endsWith("'")) return token.slice(1,-1);
+      return token;
+    });
     const rest = raw.trim().replace(/^\S+\s*/, "");
     const cmd = parts[0].toUpperCase();
     let followingWait;
@@ -173,11 +177,12 @@ async function executeCommands(page, commands) {
           } else if (where === "PAGE") {
             // console.log("> SCROLL PAGE");
             await page.keyboard.press("PageDown");
-          }
+          } else throw new Error("SCROLL requires END or PAGE");
           break;
         }
         case "SLEEP": {
-          const secs = Number(parts[1]) || 0;
+          const secs = Number(parts[1]);
+          if (!Number.isFinite(secs) || secs < 0) throw new Error("SLEEP requires nonnegative seconds");
           //   console.log(`> SLEEP ${secs}s`);
           await page.waitForTimeout(secs * 1000);
           break;
@@ -219,7 +224,7 @@ async function executeCommands(page, commands) {
         }
         case "GET_COOKIES": {
           //   console.log("> GET_COOKIES");
-          //   console.log(await context.cookies());
+          options.onResult?.({command:cmd,value:await context.cookies()});
           break;
         }
         case "CLEAR_LOCALSTORAGE": {
@@ -228,6 +233,7 @@ async function executeCommands(page, commands) {
           break;
         }
         case "GET_LOCALSTORAGE": {
+          options.onResult?.({command:cmd,value:await page.evaluate(() => Object.fromEntries(Object.entries(localStorage)))});
           break;
         }
         case "CLEAR_SESSIONSTORAGE": {
@@ -236,7 +242,7 @@ async function executeCommands(page, commands) {
           break;
         }
         case "GET_SESSIONSTORAGE": {
-          //   console.log("> GET_SESSIONSTORAGE");
+          options.onResult?.({command:cmd,value:await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage)))});
           //   console.log(
           //     await page.evaluate(() => JSON.stringify(sessionStorage))
           //   );
@@ -253,7 +259,8 @@ async function executeCommands(page, commands) {
         case "SET_USER_AGENT": {
           const ua = parts.slice(1).join(" ");
           //   console.log(`> SET_USER_AGENT ${ua}`);
-          await context.setExtraHTTPHeaders({ "user-agent": ua });
+          const session = await context.newCDPSession(page);
+          await session.send("Emulation.setUserAgentOverride", { userAgent: ua });
           break;
         }
         case "EMULATE_NETWORK": {
@@ -341,6 +348,7 @@ async function executeCommands(page, commands) {
         case "NEW_PAGE": {
           //   console.log("> NEW_PAGE");
           page = await context.newPage();
+          await options.onPage?.(page);
           break;
         }
         case "CLOSE_PAGE": {

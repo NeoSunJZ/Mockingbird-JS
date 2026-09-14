@@ -72,3 +72,13 @@ test('prefix/postfix updates preserve numeric conversion, reference side effects
   assert.equal(run(wrap('let n=1n;const a=n++;const b=++n;String(a)+":"+String(b)+":"+String(n);','UpdateExpression'),false),'1:3:3');
   assert.throws(()=>run(wrap('const n=1;n++;','UpdateExpression'),false),/constant variable/);
 });
+test('native Boolean and Object.is use raw primitives without changing shadowed functions', () => {
+  assert.equal(run('const x=__mockingbird.source(false);JSON.stringify([Boolean(x),Object.is(x,false),Number(__mockingbird.source("12")),String(__mockingbird.source(Symbol("x")))]);'),'[false,true,12,"Symbol(x)"]');
+  assert.equal(run('function Boolean(x){return typeof x;}Boolean({});'),'object');
+});
+test('dynamic code reports its gap while direct eval keeps lexical scope', () => {
+  assert.equal(run('const x=7;eval("x");'),7);
+  assert.equal(run('const x=7;eval("x");__mockingbird.events.some(e=>e.reason==="direct-eval");'),true);
+  assert.equal(run('new Function("return 3")();'),3);
+  assert.throws(()=>prepareScript('if(true){let globalThis={};if(x)f();}'),/shadowed/);
+});

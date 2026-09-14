@@ -9,6 +9,7 @@ function installSinkHooks(host, runtime) {
     restores.push(()=>Object.defineProperty(object,key,descriptor));
   }
   function written(node,key,value) {
+    if([3,4,8].includes(node.nodeType) && ['text','data','nodeValue','textContent'].includes(key)) key='text';
     let slots=nodeValues.get(node);
     if(!slots){slots=new Map();nodeValues.set(node,slots);}
     if(runtime.labels(value).length) slots.set(key,value); else slots.delete(key);
@@ -30,8 +31,15 @@ function installSinkHooks(host, runtime) {
     const descriptor=prototype && Object.getOwnPropertyDescriptor(prototype,key);
     if(!descriptor?.set) continue;
     patch(prototype,key,{set(value){
+      const connected=Object.getOwnPropertyDescriptor(host.Node.prototype,'isConnected').get.call(this);
       const result=Reflect.apply(descriptor.set,this,[runtime.raw(value)]);
-      written(this,key,value);
+      if(key==='nodeValue' && ![3,4,7,8].includes(this.nodeType)) return result;
+      if(key==='textContent' && [9,10].includes(this.nodeType)) return result;
+      if(key==='textContent' && [1,11].includes(this.nodeType) && this.firstChild && this.childNodes.length===1 && this.firstChild.nodeType===3) {
+        nodeValues.get(this)?.delete(key);
+        written(this.firstChild,'text',value);
+      } else if(key==='outerHTML' && connected) runtime.sink(key,value,{connected:true});
+      else written(this,key,value);
       return result;
     }});
   }

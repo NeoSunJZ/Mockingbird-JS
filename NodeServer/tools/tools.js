@@ -55,11 +55,42 @@ function prepareScript(source) {
       if (p.scope.hasBinding('globalThis', { noGlobals: true })) throw new Error('Reserved runtime binding globalThis is shadowed');
     },
     enter(p) {
-      if (p.isFunction() && p.scope.hasOwnBinding('globalThis')) throw new Error('Reserved runtime binding globalThis is shadowed');
+      if (p.isScope() && p.scope.hasOwnBinding('globalThis')) throw new Error('Reserved runtime binding globalThis is shadowed');
       if (isHelper(p.node)) p.skip();
     },
     'IfStatement|WhileStatement|DoWhileStatement|ForStatement|ConditionalExpression': {
       exit(p) { if (p.node.test) p.node.test = call('condition', [p.node.test]); }
+    },
+    CallExpression: {
+      exit(p) {
+        const n = p.node;
+        if (t.isIdentifier(n.callee, {name:'eval'}) && !p.scope.getBinding('eval')) {
+          p.replaceWith(t.sequenceExpression([call('gap',[t.stringLiteral('direct-eval')]),n]));
+          p.skip(); return;
+        }
+        if (t.isIdentifier(n.callee, {name:'Function'}) && !p.scope.getBinding('Function')) {
+          p.replaceWith(t.sequenceExpression([call('gap',[t.stringLiteral('dynamic-function')]),n]));
+          p.skip(); return;
+        }
+        if (t.isIdentifier(n.callee) && ['Boolean', 'Number', 'String', 'BigInt'].includes(n.callee.name) && !p.scope.getBinding(n.callee.name)) {
+          p.replaceWith(call('builtin', [n.callee, t.unaryExpression('void', t.numericLiteral(0)), t.arrayExpression(n.arguments)]));
+          p.skip();
+        } else if (t.isMemberExpression(n.callee) && !n.callee.computed && t.isIdentifier(n.callee.object, {name:'Object'}) &&
+          t.isIdentifier(n.callee.property, {name:'is'}) && !p.scope.getBinding('Object')) {
+          const receiver = temp(p);
+          p.replaceWith(t.sequenceExpression([assign(receiver,n.callee.object),call('builtin',[
+            t.memberExpression(t.cloneNode(receiver),t.identifier('is')),t.cloneNode(receiver),t.arrayExpression(n.arguments)])]));
+          p.skip();
+        }
+      }
+    },
+    NewExpression: {
+      exit(p) {
+        if (t.isIdentifier(p.node.callee, {name:'Function'}) && !p.scope.getBinding('Function')) {
+          p.replaceWith(t.sequenceExpression([call('gap',[t.stringLiteral('dynamic-function')]),p.node]));
+          p.skip();
+        }
+      }
     },
     UnaryExpression: {
       exit(p) {

@@ -4,6 +4,7 @@ const playwright = require('playwright');
 const injectedFunction = require('./tools/injected');
 const { executeCommands } = require('./tools/command');
 const { ScriptStore } = require('./tools/scripts');
+const { interceptPage } = require('./tools/intercept');
 
 function parseConfig(text) {
   let targetAPI;
@@ -56,36 +57,18 @@ async function runScenario(config, options = {}) {
             store.observe(enriched);
           });
           await context.addInitScript(injectedFunction,{targetAPI:config.targetAPI,round,eventLimit:options.eventLimit});
-          await context.route('**/*',route=>task((async()=>{
-            const request=route.request();
-            if (request.resourceType()!=='script') return route.continue();
-            let response;
-            try {
-              // Worker globals do not receive page init scripts. Passing through
-              // is explicit incomplete coverage, rather than a ReferenceError.
-              let frame;
-              try {frame=request.frame();} catch {}
-              if (!frame) {report({kind:'gap',reason:'worker-script',url:request.url()});return route.continue();}
-              response=await route.fetch();
-              if (response.status()<200 || response.status()>=300 || response.status()===204) return route.fulfill({response});
-              const registered=await store.register(request.url(),await response.text());
-              const headers={...response.headers()};
-              for (const name of ['content-length','content-encoding','etag','last-modified']) delete headers[name];
-              await route.fulfill({response,body:registered.source,headers});
-            } catch (error) {
-              report({kind:'gap',reason:'script-interception',url:request.url(),message:error.message});
-              if (response) await route.fulfill({response}); else await route.continue();
-            }
-          })()));
         }
+        const pageReady=new WeakMap();
         context.on('page',page=>{
+          if(round>=0) pageReady.set(page,task(interceptPage(context,page,store,report,task)));
           page.on('pageerror',error=>{errors.push(error.message);report({kind:'pageerror',message:error.message,stack:error.stack});});
           page.on('requestfailed',request=>report({kind:'requestfailed',url:request.url(),failure:request.failure()}));
           page.on('response',response=>{if(response.url().includes(config.targetAPI)){targetResponses++;lastEvent=Date.now();}});
           page.on('worker',worker=>report({kind:'gap',reason:'worker',url:worker.url()}));
         });
         let page=await context.newPage();
-        page=await executeCommands(page,config.commands);
+        await pageReady.get(page);
+        page=await executeCommands(page,config.commands,{onResult:result=>report({kind:'command-result',...result}),onPage:next=>pageReady.get(next)});
         const deadline=Date.now()+(options.settleTimeout ?? 10000);
         let settled=false;
         while (Date.now()<deadline) {
