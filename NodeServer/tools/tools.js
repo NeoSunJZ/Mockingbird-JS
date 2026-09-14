@@ -145,11 +145,11 @@ function getExpression(ast, source, location) {
     else p.skip();
   } });
   if (!leaf) return { expression: null, statement: null, update: null, candidates: [] };
-  if (leaf.findParent(p => isHelper(p.node, 'capture'))) return { expression: null, statement: null, update: null, candidates: [] };
+  if (leaf.findParent(p => isHelper(p.node, 'capture') || isHelper(p.node, 'step'))) return { expression: null, statement: null, update: null, candidates: [] };
   let expression, statement, update;
   const candidates = [];
   for (let p = leaf; p && !p.isProgram(); p = p.parentPath) {
-    if (p.isUpdateExpression()) update = p.node;
+    if (p.isUpdateExpression()) { update = p.node; expression = p.node; candidates.push(p.node.loc); break; }
     if (!statement && p.isStatement()) statement = p.node;
     if (isHelper(p.node, 'capture')) break; // This boundary has already been handled.
     if (p.isVariableDeclarator() && p.node.init || p.isAssignmentExpression() || p.isReturnStatement() && p.node.argument) {
@@ -201,7 +201,16 @@ function wrapExpressionsAtPositions(source, locations, iteration = 0, onGap = ()
           p.replaceWith(prefix.length ? t.sequenceExpression([...prefix, write]) : write);
         } catch (error) { onGap({ reason: error.message, location: n.loc }); }
       } else if (p.isUpdateExpression()) {
-        onGap({ reason: 'update-propagation', location: p.node.loc });
+        const n = p.node;
+        try {
+          const { prefix, ref } = reference(p, n.argument);
+          const step = temp(p);
+          const before = t.memberExpression(t.cloneNode(step), t.identifier('before'));
+          const after = t.memberExpression(t.cloneNode(step), t.identifier('after'));
+          p.replaceWith(t.sequenceExpression([...prefix,
+            assign(step, call('step', [t.cloneNode(ref), t.numericLiteral(n.operator === '++' ? 1 : -1)])),
+            assign(ref, t.cloneNode(after)), n.prefix ? after : before]));
+        } catch (error) { onGap({ reason: error.message, location: n.loc }); }
       } else if (valuePath.isExpression() && !valuePath.isFunction() && !valuePath.isClass()) {
         valuePath.replaceWith(captured(valuePath.node));
       } else onGap({ reason: 'unsupported-expression', location: p.node.loc });

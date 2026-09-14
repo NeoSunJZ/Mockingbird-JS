@@ -98,3 +98,17 @@ test('native array predicates use the original boolean value', () => {
   const fn=function(){};const obj=t.source({fn});
   assert.equal(t.raw(obj.fn),fn);
 });
+test('value identities form a graph without conflating equal primitive sources', () => {
+  const t=setup();const a=t.source(1);const b=t.source(1);
+  const c=t.capture(()=>Number(a)+1,'add');
+  assert.notEqual(t.meta(a).valueId,t.meta(b).valueId);
+  assert.ok(t.meta(c).parents.includes(t.meta(a).valueId));
+  assert.ok(!t.meta(c).parents.includes(t.meta(b).valueId));
+  t.sink('test',c);
+  assert.equal(t.events.find(e=>e.kind==='sink').valueId,t.meta(c).valueId);
+});
+test('flush timeout bounds a stuck reporting callback', async () => {
+  const t=createRuntime({reportLog:()=>new Promise(()=>{})});
+  t.source(1);
+  assert.ok((await t.flush(10)).failures.includes('report-flush-timeout'));
+});

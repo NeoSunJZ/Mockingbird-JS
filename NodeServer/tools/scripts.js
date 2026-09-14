@@ -47,7 +47,7 @@ class ScriptStore {
       line:frame.line,column:frame.column,from:event.from,
       expression:result.expression?.code,statement:result.statement?.code,isController:result.statement?.isController});
     for (const loc of result.candidates) served.record.candidates.set(`${loc.start.index}:${loc.end.index}`,loc);
-    if (result.update) this.report({kind:'gap',reason:'update-propagation',fileURL:served.record.url,location:result.update.position});
+
   }
   async advance(iteration) {
     let changes = 0;

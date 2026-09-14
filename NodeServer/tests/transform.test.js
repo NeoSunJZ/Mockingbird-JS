@@ -66,3 +66,9 @@ test('stack parser handles anonymous URLs with ports and empty/missing stacks', 
   ]);
   assert.deepEqual(parseStack(null),[]);
 });
+test('prefix/postfix updates preserve numeric conversion, reference side effects and provenance', () => {
+  const s='let gets=0,keys=0,sets=0;let value=__mockingbird.source("2");const obj={get n(){gets++;return value;},set n(v){sets++;value=v;}};const key={toString(){keys++;return "n";}};const before=obj[key]++;const after=--obj[key];JSON.stringify([Number(before),Number(after),Number(value),gets,keys,sets,__mockingbird.labels(value)]);';
+  assert.equal(run(wrap(s,'UpdateExpression'),false),'[2,2,2,2,2,2,["test/response#1:"]]');
+  assert.equal(run(wrap('let n=1n;const a=n++;const b=++n;String(a)+":"+String(b)+":"+String(n);','UpdateExpression'),false),'1:3:3');
+  assert.throws(()=>run(wrap('const n=1;n++;','UpdateExpression'),false),/constant variable/);
+});
