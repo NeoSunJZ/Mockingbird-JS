@@ -1,491 +1,154 @@
-const playwright = require("playwright");
-const http = require("http");
-const fs = require("fs");
-const fsp = fs.promises;
-const path = require("path");
-const parser = require("@babel/parser");
-const injectedFunction = require("./tools/injected");
-const { executeCommands } = require("./tools/command");
-const {
-  saveToFile,
-  getExpression,
-  splitVariableDeclarations,
-  wrapExpressionsAtPositions,
-  parseStack,
-} = require("./tools/tools");
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const playwright = require('playwright');
+const injectedFunction = require('./tools/injected');
+const { executeCommands } = require('./tools/command');
+const { ScriptStore } = require('./tools/scripts');
 
-const BROWSER = (process.env.BROWSER || "chromium").toLowerCase();
-if (!["chromium", "firefox", "webkit"].includes(BROWSER)) {
-  console.warn(`Unsupported BROWSER="${BROWSER}", fallback to "chromium".`);
-}
-
-let astCache = new Map(); // used to cache the parsed AST, avoid duplicate parsing
-let scriptCache = new Map(); // used to cache the processed script content
-let wrapLists = {};
-let targetAPI = null;
-let targetRes = null;
-let baseSavePath;
-let commands;
-let index;
-let rawLogBuffer = []; // store the original logs: stack, target, prop, from
-let analysisLogBuffer = []; // store the analyzed logs: expression, statement
-let logSequence = 0; // global log sequence, ensure order
-
-// auxiliary function: used to clear Service Worker cache
-async function clearServiceWorkerCaches(page) {
-  console.log("Clearing ServiceWorker and cache...");
-
-  await page.evaluate(async () => {
-    // 1. clear cache
-    if ("caches" in window) {
-      const keys = await window.caches.keys();
-      await Promise.all(keys.map((key) => window.caches.delete(key)));
-      console.log(`Cleared ${keys.length} cache entries`);
-    }
-
-    // 2. unregister all ServiceWorker
-    if (navigator.serviceWorker) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      if (registrations.length > 0) {
-        await Promise.all(registrations.map((r) => r.unregister()));
-        console.log(`Unregistered ${registrations.length} ServiceWorker`);
-      } else {
-        console.log("No active ServiceWorker found");
-      }
-    }
-
-    console.log("ServiceWorker and cache cleared");
-
-    return true; // return value to confirm execution completed
-  });
-}
-
-function waitForNonEmpty(timeout = 10000, interval = 200) {
-  const start = Date.now();
-  return new Promise((resolve) => {
-    (function check() {
-      if (Object.keys(wrapLists).length > 0) return resolve(true);
-      if (Date.now() - start >= timeout) return resolve(false);
-      setTimeout(check, interval);
-    })();
-  });
-}
-
-// according to the data in wrapLists, modify the local script
-async function changeLocalScript(index) {
-  for (const [encodedUrl, entries] of Object.entries(wrapLists)) {
-    const url = decodeURIComponent(encodedUrl);
-    const fileName = path.basename(new URL(url).pathname);
-    const localDir = path.join(baseSavePath, "src/");
-    const localFilePath = path.join(localDir, fileName);
-    let scriptSource;
-    try {
-      scriptSource = await fsp.readFile(localFilePath, "utf8");
-    } catch (err) {
-      console.error(`Failed to read local script: ${localFilePath}`, err);
-      continue; // skip this file
-    }
-    const modifiedBody = wrapExpressionsAtPositions(
-      scriptSource,
-      entries,
-      index
-    );
-    await saveToFile(modifiedBody, fileName, "new", localDir);
+function parseConfig(text) {
+  let targetAPI;
+  const commands=[];
+  for (const raw of text.split(/\r?\n/)) {
+    const line=raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const match=/^TARGET\s+(.+)$/i.exec(line);
+    if (match) {
+      if (targetAPI) throw new Error('Config must contain exactly one TARGET');
+      targetAPI=match[1].trim();
+    } else commands.push(line);
   }
-  wrapLists = {};
+  if (!targetAPI) throw new Error('Config is missing TARGET');
+  if (!commands.some(c=>/^LOAD\s+/i.test(c))) throw new Error('Config is missing LOAD');
+  return {targetAPI,commands};
 }
-
-// batch save cycle logs
-async function saveCycleLogs(cycleIndex) {
-  if (rawLogBuffer.length === 0 && analysisLogBuffer.length === 0) {
-    return; // no logs to save
-  }
-
-  // merge all logs and sort by sequence
-  const allLogs = [...rawLogBuffer, ...analysisLogBuffer].sort(
-    (a, b) => a.sequence - b.sequence
-  );
-
-  let logContent = `\n=== Cycle ${cycleIndex} Start ===\n`;
-
-  // process each log by sequence
-  for (const logEntry of allLogs) {
-    const { sequence, type, data } = logEntry;
-
-    if (type === "raw") {
-      logContent += `\n[${sequence}] RAW: prop=${
-        data.prop
-      }, from=${JSON.stringify(data.from)}\n`;
-    } else if (type === "expression") {
-      logContent += `[${sequence}] ${data.type} EXPRESSION: ${data.code}\n`;
-    } else if (type === "statement") {
-      logContent += `[${sequence}] ${data.type} STATEMENT: ${data.code}\n`;
-    }
-  }
-
-  logContent += `\n=== Cycle ${cycleIndex} End ===\n\n`;
-
-  // save to file
-  const Dir = path.join(baseSavePath, "console/");
-  await saveToFile(logContent, "usevar.log", "add", Dir);
-
-  // clear cache, prepare for next round
-  rawLogBuffer = [];
-  analysisLogBuffer = [];
-
-  console.log(`📝 Cycle ${cycleIndex}: Saved ${allLogs.length} logs to file`);
+const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
+async function snapshot(page) {
+  return page.evaluate(()=>({url:location.href,title:document.title,text:document.body?.textContent || '',
+    controls:[...document.querySelectorAll('input,select,textarea')].map(e=>({tag:e.tagName,type:e.type,value:e.value,checked:e.checked}))}));
 }
-
-// intercept js scripts
-function interceptScripts(client) {
-  client.on("Fetch.requestPaused", async (event) => {
-    const {
-      requestId,
-      request,
-      responseStatusCode,
-      responseHeaders,
-      responseErrorReason,
-    } = event;
-    // console.log("interceptScripts: " + request.url);
-    const url = request.url;
-    const fileName = path.basename(new URL(url).pathname);
-
-    // if the request fails or is not a js file, do nothing
-    if (responseErrorReason || !fileName.endsWith(".js")) {
-      await client.send("Fetch.continueRequest", { requestId });
-      return;
-    }
-
-    // local save path
-    let text;
-    const localDir = path.join(baseSavePath, "src");
-    const localPath = path.join(localDir, fileName);
-    const fileExists = await fsp
-      .access(localPath)
-      .then(() => true)
-      .catch(() => false);
-
-    if (!fileExists) {
-      // local does not exist: pull the original response body
+async function runScenario(config, options = {}) {
+  if (options.browserName && options.browserName !== 'chromium') throw new Error('This runner currently supports Chromium only');
+  const output = options.output || path.join(__dirname,'logs',`run-${Date.now()}`);
+  await fs.mkdir(output,{recursive:true});
+  const logs=[];
+  let round=-1, sequence=0, lastEvent=Date.now(), sourceCount=0;
+  const report = event => { lastEvent=Date.now(); logs.push({recordSequence:++sequence,timestamp:Date.now(),cycle:round,...event}); };
+  const store = new ScriptStore(path.join(output,'src'),report);
+  const browser = await (options.chromium || playwright.chromium).launch({headless:options.headless ?? false,
+    ...(options.executablePath ? {executablePath:options.executablePath} : {})});
+  const summary={status:'running',output,cycles:[],limitations:['Only the configured scenario and observation interval are checked.','Inline/eval/worker code is not rewritten.']};
+  let baseline;
+  try {
+    for (round = options.baseline === false ? 0 : -1; round < (options.maxRounds ?? 20); round++) {
+      sourceCount=0;
+      const start=logs.length;
+      const errors=[];
+      const context=await browser.newContext({serviceWorkers:'block',...(options.storageState ? {storageState:options.storageState} : {})});
+      const tasks=new Set();
+      let targetResponses=0;
+      function task(promise) { tasks.add(promise); promise.finally(()=>tasks.delete(promise)).catch(()=>{}); return promise; }
       try {
-        // for HTTP status codes without response headers or response bodies, continue the request directly
-        if (
-          !responseHeaders ||
-          responseStatusCode === 204 ||
-          (responseStatusCode >= 300 && responseStatusCode <= 399)
-        ) {
-          await client.send("Fetch.continueRequest", { requestId });
-          return;
+        if (round>=0) {
+          await context.exposeBinding('reportLog',(source,event)=>{
+            const enriched={...event,frameURL:source.frame.url()};
+            report(enriched);
+            if (event.kind==='source') sourceCount++;
+            store.observe(enriched);
+          });
+          await context.addInitScript(injectedFunction,{targetAPI:config.targetAPI,round,eventLimit:options.eventLimit});
+          await context.route('**/*',route=>task((async()=>{
+            const request=route.request();
+            if (request.resourceType()!=='script') return route.continue();
+            let response;
+            try {
+              // Worker globals do not receive page init scripts. Passing through
+              // is explicit incomplete coverage, rather than a ReferenceError.
+              let frame;
+              try {frame=request.frame();} catch {}
+              if (!frame) {report({kind:'gap',reason:'worker-script',url:request.url()});return route.continue();}
+              response=await route.fetch();
+              if (response.status()<200 || response.status()>=300 || response.status()===204) return route.fulfill({response});
+              const registered=await store.register(request.url(),await response.text());
+              const headers={...response.headers()};
+              for (const name of ['content-length','content-encoding','etag','last-modified']) delete headers[name];
+              await route.fulfill({response,body:registered.source,headers});
+            } catch (error) {
+              report({kind:'gap',reason:'script-interception',url:request.url(),message:error.message});
+              if (response) await route.fulfill({response}); else await route.continue();
+            }
+          })()));
         }
-
-        const { body, base64Encoded } = await client.send(
-          "Fetch.getResponseBody",
-          { requestId }
-        );
-        // decode to string
-        text = base64Encoded
-          ? Buffer.from(body, "base64").toString("utf8")
-          : body;
-        // use tool function to process
-        text = splitVariableDeclarations(text);
-        await saveToFile(text, fileName, "new", localDir);
-      } catch (err) {
-        console.error("Failed to get/process script:", err);
-        try {
-          await client.send("Fetch.continueRequest", { requestId });
-        } catch (continueErr) {
-          console.error("Failed to continue request:", continueErr);
-        }
-        return;
-      }
-    } else {
-      // local exists: read from disk
-      try {
-        text = await fsp.readFile(localPath, "utf8");
-      } catch (err) {
-        console.error("Failed to read local script:", err);
-        // when error, continue the original request
-        try {
-          await client.send("Fetch.continueRequest", { requestId });
-        } catch (continueErr) {
-          console.error("Failed to continue request:", continueErr);
-        }
-        return;
-      }
-    }
-
-    try {
-      // find the original Content-Type header
-      const originalContentTypeHeader = (responseHeaders ?? []).find(
-        (h) => h.name.toLowerCase() === "content-type"
-      );
-
-      // remove content-length, and keep the original Content-Type
-      let headers = (responseHeaders ?? []).filter(
-        (h) => h.name.toLowerCase() !== "content-length"
-      );
-
-      // if the original response does not have Content-Type, add a default one
-      if (!originalContentTypeHeader) {
-        headers.push({
-          name: "Content-Type",
-          value: "application/javascript",
+        context.on('page',page=>{
+          page.on('pageerror',error=>{errors.push(error.message);report({kind:'pageerror',message:error.message});});
+          page.on('requestfailed',request=>report({kind:'requestfailed',url:request.url(),failure:request.failure()}));
+          page.on('response',response=>{if(response.url().includes(config.targetAPI)){targetResponses++;lastEvent=Date.now();}});
+          page.on('worker',worker=>report({kind:'gap',reason:'worker',url:worker.url()}));
         });
-      }
-
-      // Fulfill intercept, return with Base64 body
-      const base64Body = Buffer.from(text, "utf8").toString("base64");
-      await client.send("Fetch.fulfillRequest", {
-        requestId,
-        responseCode: responseStatusCode || 200, // ensure there is a status code
-        responseHeaders: headers,
-        body: base64Body,
-      });
-    } catch (err) {
-      console.error("Failed to respond request:", err);
-      // if fulfillRequest fails, try to continue the original request
-      try {
-        await client.send("Fetch.continueRequest", { requestId });
-      } catch (continueErr) {
-        console.error("Failed to continue original request:", continueErr);
+        let page=await context.newPage();
+        page=await executeCommands(page,config.commands);
+        const deadline=Date.now()+(options.settleTimeout ?? 10000);
+        let settled=false;
+        while (Date.now()<deadline) {
+          await delay(25);
+          if (tasks.size) continue;
+          if (Date.now()-lastEvent >= (options.quietMs ?? 300) && targetResponses>0 && (round<0 || sourceCount>0)) {settled=true;break;}
+        }
+        for (const current of context.pages()) for (const frame of current.frames()) {
+          if (round>=0) {
+            const flush=await frame.evaluate(()=>globalThis.__mockingbird?.flush()).catch(error=>({failures:[error.message]}));
+            for (const failure of flush?.failures || []) report({kind:'gap',reason:'runtime-flush',message:failure});
+          }
+        }
+        await Promise.all([...tasks]);
+        const observed=await snapshot(page);
+        if (round<0) baseline=observed;
+        const matchesBaseline=baseline ? JSON.stringify(observed)===JSON.stringify(baseline) : null;
+        const cycle={round,settled,targetResponses,sourceCount,errors,matchesBaseline,snapshot:observed};
+        summary.cycles.push(cycle);
+        if (round<0) {
+          if (!settled || errors.length) throw new Error('Baseline scenario failed or did not observe the target response');
+          continue;
+        }
+        if (!settled || errors.length || matchesBaseline===false) {
+          summary.status='incomplete';
+          summary.reason=matchesBaseline===false ? 'behavior-diverged' : errors.length ? 'page-errors' : 'observation-timeout';
+          break;
+        }
+        const changes=await store.advance(round+1);
+        cycle.changedScripts=changes;
+        if (!changes) {
+          summary.status=logs.some(e=>e.kind==='gap') ? 'incomplete' : 'converged';
+          summary.reason='no-new-supported-sites';
+          break;
+        }
+      } finally {
+        // Closing the context stops late timers before the final log snapshot.
+        await context.close();
+        await Promise.allSettled([...tasks]);
+        await fs.writeFile(path.join(output,`cycle-${round}.jsonl`),logs.slice(start).map(e=>JSON.stringify(e)).join('\n')+'\n');
       }
     }
-  });
+    if (summary.status==='running') {summary.status='incomplete';summary.reason='max-rounds';}
+  } catch (error) {
+    summary.status='failed';summary.reason=error.message;
+  } finally {
+    await browser.close();
+    summary.scripts=store.manifest();
+    summary.gaps=logs.filter(e=>e.kind==='gap');
+    await fs.writeFile(path.join(output,'summary.json'),JSON.stringify(summary,null,2));
+  }
+  return summary;
 }
 
-const connectToBrowser = async () => {
-  const browser = await playwright[BROWSER].launch({
-    // only Chromium has executable path requirement; Firefox/WebKit default
-    ...(BROWSER === "chromium" && {
-      executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
-      args: [
-        "--remote-debugging-port=9222",
-        "--remote-debugging-address=0.0.0.0",
-      ],
-      devtools: true,
-    }),
-    headless: false,
-  });
-
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  let client = null;
-  let Dir = path.join(baseSavePath, "console/");
-
-  client = await context.newCDPSession(page);
-  await client.send("Debugger.enable");
-  await client.send("Fetch.enable", {
-    patterns: [
-      { urlPattern: "*", resourceType: "Script", requestStage: "Response" },
-      { urlPattern: "*", resourceType: "Document", requestStage: "Response" },
-    ],
-  });
-
-  // record response
-  page.on("response", async (response) => {
-    const url = response.url();
-    if (url.includes(targetAPI) && !targetRes) {
-      const jsonData = await response.json();
-      targetRes = jsonData;
-      // console.log("targetRes", targetRes);
-    }
-  });
-
-  // execute injection before new page loads
-  await page.addInitScript(injectedFunction, targetAPI);
-
-  // map function to browser context
-  await page.exposeFunction("reportLog", (log) => {
-    let { stack, target, prop, from, logIndex } = log;
-    console.log(from);
-    let errorStack = parseStack(stack);
-    let currentSeq = ++logSequence;
-    if (from) {
-      rawLogBuffer.push({
-        sequence: currentSeq,
-        timestamp: Date.now(),
-        cycleIndex: index,
-        type: "raw",
-        data: {
-          prop: prop,
-          from: from,
-          target: target,
-        },
-      });
-    }
-
-    if (errorStack && from) {
-      // find the expression corresponding to the first call stack and analyze it
-      let stackIndex = 1;
-      let stack = errorStack[stackIndex];
-      while (!stack.fileURL.includes("http") || !stack.fileURL.includes(".js"))
-        stack = errorStack[++stackIndex];
-      if (stack) {
-        let { fileURL, line, column } = stack;
-        const fileName = path.basename(new URL(fileURL).pathname);
-        const localDir = path.join(baseSavePath, "src");
-        const localFilePath = path.join(localDir, fileName);
-        let scriptSource = scriptCache.get(localFilePath);
-        let ast = astCache.get(localFilePath);
-        if (!scriptSource) {
-          scriptSource = fs.readFileSync(localFilePath, "utf8");
-          scriptCache.set(localFilePath, scriptSource);
-          ast = parser.parse(scriptSource, {
-            sourceType: "unambiguous",
-            plugins: ["jsx"],
-            errorRecovery: true,
-          });
-          astCache.set(localFilePath, ast);
-        }
-        const { expression, statement, update } = getExpression(
-          ast,
-          scriptSource,
-          {
-            lineNumber: line - 1,
-            columnNumber: column,
-          }
-        );
-        if (expression?.code) {
-          analysisLogBuffer.push({
-            sequence: currentSeq,
-            timestamp: Date.now(),
-            cycleIndex: index,
-            type: "expression",
-            data: {
-              code: expression.code,
-              type: expression.type,
-              fileURL: fileURL,
-              line: line,
-              column: column,
-            },
-          });
-        }
-
-        if (statement?.code) {
-          analysisLogBuffer.push({
-            sequence: currentSeq,
-            timestamp: Date.now(),
-            cycleIndex: index,
-            type: "statement",
-            data: {
-              code: statement.code,
-              type: statement.type,
-              fileURL: fileURL,
-              line: line,
-              column: column,
-            },
-          });
-        }
-
-        if (logIndex === index) {
-          if (expression?.left) {
-            const encodedURL = encodeURIComponent(fileURL);
-            const entry = {
-              start: expression.position.start,
-              end: expression.position.end,
-              code: expression.code,
-            };
-            (wrapLists[encodedURL] ??= new Set()).add(entry);
-          }
-
-          if (statement?.type === "ReturnStatement") {
-            const encodedURL = encodeURIComponent(fileURL);
-            const entry = {
-              start: statement.position.start,
-              end: statement.position.end,
-              code: statement.code,
-            };
-            (wrapLists[encodedURL] ??= new Set()).add(entry);
-          }
-        }
-      }
-    }
-  });
-
-  index = 0;
-  let hasNewWraps = false;
-  interceptScripts(client);
-  do {
-    logSequence = 0;
-    astCache.clear();
-    scriptCache.clear();
-    await client.send("Network.clearBrowserCache");
-    await client.send("Network.clearBrowserCookies");
-    await client.send("Network.setCacheDisabled", { cacheDisabled: true });
-    // if there is a webpage using service_worker, it needs to be cleared, otherwise the source file cannot be replaced
-    await clearServiceWorkerCaches(page);
-
-    await page.addInitScript({
-      content: `window.index = ${index};`,
-    });
-    for (let cmd of commands) {
-      if (cmd.startsWith("LOAD")) {
-        await changeLocalScript(index);
-      }
-      await executeCommands(page, [cmd]);
-    }
-    hasNewWraps = await waitForNonEmpty(10000, 200);
-
-    // save all logs of the current cycle
-    await saveCycleLogs(index);
-
-    index++;
-  } while (hasNewWraps);
-
-  if (rawLogBuffer.length > 0 || analysisLogBuffer.length > 0) {
-    await saveCycleLogs(index);
-  }
-
-  browser.on("disconnected", () => {
-    console.log("The browser has disconnected");
-    server.close();
-  });
-};
-
-/**
- * the program start
- */
-const [, , config] = process.argv;
-if (!config) {
-  console.error("Usage: node edekiller.js <config>");
-  process.exit(1);
-} else {
-  let configPath = path.join(__dirname, "configs/" + config + ".config");
-  if (!fs.existsSync(configPath)) {
-    console.error("Config file not found:", configPath);
-    process.exit(1);
-  }
-  commands = fs.readFileSync(configPath, "utf8");
-  commands = commands
-    .split("\r\n")
-    .filter((line) => line.trim() !== "")
-    .filter((line) => {
-      if (line.startsWith("#")) return false;
-      if (line.startsWith("TARGET")) {
-        targetAPI = line.split(" ")[1];
-        return false;
-      }
-      return true;
-    });
-
-  baseSavePath = path.join(
-    __dirname,
-    "logs/" + encodeURIComponent(config) + "/"
-  );
+async function main() {
+  const name=process.argv[2];
+  if (!name) throw new Error('Usage: node ede-killer.js <config-name-or-path>');
+  const filename=name.endsWith('.config') ? path.resolve(name) : path.join(__dirname,'configs',`${name}.config`);
+  const config=parseConfig(await fs.readFile(filename,'utf8'));
+  const summary=await runScenario(config,{browserName:process.env.BROWSER,executablePath:process.env.BROWSER_PATH,
+    headless:process.env.HEADLESS==='1',output:path.join(__dirname,'logs',`${path.basename(filename,'.config')}-${Date.now()}`)});
+  console.log(`${summary.status}: ${summary.reason}. Results: ${summary.output}`);
+  if(summary.status!=='converged') process.exitCode=1;
 }
-
-const hostname = "0.0.0.0";
-const port = 7521;
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Server is running\n");
-});
-
-server
-  .listen(port, hostname, async () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-    await connectToBrowser();
-  })
-  .on("error", (err) => {
-    console.error(err);
-  });
+if(require.main===module) main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={parseConfig,runScenario};

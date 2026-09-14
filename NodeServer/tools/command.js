@@ -2,9 +2,22 @@
 // not tested
 async function executeCommands(page, commands) {
   const context = page.context();
-  for (const raw of commands) {
-    const parts = raw.trim().split(" ");
+  for (let commandIndex = 0; commandIndex < commands.length; commandIndex++) {
+    const raw = commands[commandIndex];
+    const parts = raw.trim().split(/\s+/);
+    const rest = raw.trim().replace(/^\S+\s*/, "");
     const cmd = parts[0].toUpperCase();
+    let followingWait;
+    const next = commands[commandIndex + 1]?.trim();
+    if (["CLICK", "DOUBLE_CLICK", "PRESS", "EVALUATE", "LOAD", "INPUT"].includes(cmd) && next) {
+      const wait = /^(WAIT_FOR_RESPONSE|WAIT_FOR_EVENT|WAIT_FOR_DOWNLOAD|WAIT_NAVIGATION)(?:\s+(.*))?$/i.exec(next);
+      if (wait) {
+        if (wait[1].toUpperCase() === "WAIT_FOR_RESPONSE") followingWait = page.waitForResponse(r => r.url().includes(wait[2]));
+        else if (wait[1].toUpperCase() === "WAIT_NAVIGATION") followingWait = page.waitForNavigation({ waitUntil: "load" });
+        else followingWait = page.waitForEvent(wait[1].toUpperCase() === "WAIT_FOR_DOWNLOAD" ? "download" : wait[2]);
+        followingWait.catch(() => {});
+      }
+    }
     try {
       switch (cmd) {
         case "LOAD": {
@@ -42,7 +55,7 @@ async function executeCommands(page, commands) {
           break;
         }
         case "WAIT_FOR_FUNCTION": {
-          const fn = parts.slice(1).join(" ");
+          const fn = rest;
           //   console.log(`> WAIT_FOR_FUNCTION ${fn}`);
           await page.waitForFunction(fn);
           break;
@@ -171,7 +184,7 @@ async function executeCommands(page, commands) {
         }
 
         case "EVALUATE": {
-          const js = parts.slice(1).join(" ");
+          const js = rest;
           //   console.log(`> EVALUATE ${js}`);
           await page.evaluate(js);
           break;
@@ -183,7 +196,7 @@ async function executeCommands(page, commands) {
           break;
         }
         case "ADD_STYLE": {
-          const css = parts.slice(1).join(" ");
+          const css = rest;
           //   console.log(`> ADD_STYLE ${css}`);
           // 如果是文件： { path: css }；如果是代码： { content: css }
           await page.addStyleTag({ content: css });
@@ -191,18 +204,12 @@ async function executeCommands(page, commands) {
         }
 
         case "COOKIE": {
-          const cookieStr = parts.slice(1).join(" ");
-
-          const [name, value] = cookieStr.split("=");
-          const cookieValue = value.replace(/^"|"$/g, "");
-          const cookie = {
-            name: name,
-            value: cookieValue,
-            domain: ".ruoyi.vip",
-            path: "/",
-          };
-
-          await context.addCookies([cookie]);
+          const equals = rest.indexOf("=");
+          if (equals < 1) throw new Error("COOKIE requires name=value");
+          const nextLoad = commands.slice(commandIndex + 1).find(line => /^LOAD\s+/i.test(line));
+          const url = /^https?:/.test(page.url()) ? page.url() : nextLoad?.replace(/^LOAD\s+/i, "");
+          if (!url) throw new Error("COOKIE needs an HTTP page or a following LOAD");
+          await context.addCookies([{name: rest.slice(0, equals), value: rest.slice(equals + 1).replace(/^"|"$/g, ""), url}]);
           break;
         }
         case "CLEAR_COOKIES": {
@@ -270,7 +277,7 @@ async function executeCommands(page, commands) {
           break;
         }
         case "SET_EXTRA_HTTP_HEADERS": {
-          const hdrs = JSON.parse(parts.slice(1).join(" "));
+          const hdrs = JSON.parse(rest);
           //   console.log(`> SET_EXTRA_HTTP_HEADERS ${JSON.stringify(hdrs)}`);
           await context.setExtraHTTPHeaders(hdrs);
           break;
@@ -288,25 +295,16 @@ async function executeCommands(page, commands) {
           break;
         }
         case "HAR_START": {
-          //   console.log("> HAR_START");
-          await context.tracing.start({ screenshots: true, snapshots: true });
-          break;
+          throw new Error("HAR_START requires context creation options and is not supported by this command runner");
         }
         case "HAR_STOP": {
-          const path = parts[1];
-          //   console.log(`> HAR_STOP ${path}`);
-          await context.tracing.stop({ path });
-          break;
+          throw new Error("HAR_STOP requires context creation options and is not supported by this command runner");
         }
         case "VIDEO_START": {
-          //   console.log("> VIDEO_START");
-          // 需在 context 创建时指定 recordVideo 选项，运行时无法打开
-          break;
+          throw new Error("VIDEO_START requires context creation options and is not supported by this command runner");
         }
         case "VIDEO_STOP": {
-          //   console.log("> VIDEO_STOP");
-          // 可通过 page.video().path() 获取
-          break;
+          throw new Error("VIDEO_STOP requires context creation options and is not supported by this command runner");
         }
         case "TRACING_START": {
           //   console.log("> TRACING_START");
@@ -346,19 +344,19 @@ async function executeCommands(page, commands) {
           break;
         }
         case "CLOSE_PAGE": {
-          const idx = Number(parts[1]) || -1;
+          const idx = parts[1] === undefined ? context.pages().indexOf(page) : Number(parts[1]);
           //   console.log(`> CLOSE_PAGE ${idx}`);
           const pages = context.pages();
-          (idx >= 0 && pages[idx])?.close();
+          if (!pages[idx]) throw new Error(`No page at index ${idx}`);
+          await pages[idx].close();
+          if (page.isClosed()) page = context.pages().at(-1);
           break;
         }
         case "NEW_CONTEXT": {
-          //   console.log("> NEW_CONTEXT");
-          // 需在外部持有 browser 对象
-          break;
+          throw new Error("NEW_CONTEXT requires context creation options and is not supported by this command runner");
         }
         case "SWITCH_CONTEXT": {
-          break;
+          throw new Error("SWITCH_CONTEXT requires context creation options and is not supported by this command runner");
         }
 
         case "SET_INPUT_FILES": {
@@ -376,12 +374,14 @@ async function executeCommands(page, commands) {
         }
 
         default:
-          console.warn(`> Unknown command: ${cmd}`);
+          throw new Error(`Unknown command: ${cmd}`);
       }
+      if (followingWait) { await followingWait; commandIndex++; }
     } catch (e) {
-      console.error(`Error executing ${cmd}:`, e);
+      throw new Error(`Command ${commandIndex + 1} (${raw}) failed: ${e.message}`, { cause: e });
     }
   }
+  return page;
 }
 
 module.exports = { executeCommands };

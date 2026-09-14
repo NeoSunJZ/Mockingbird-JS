@@ -69,6 +69,7 @@ function createTraceRuntime(host, options = {}) {
         if (primitive && (key === 'toJSON' || key === Symbol.toPrimitive)) return () => raw(receiver);
         // Native primitive accessors need internal slots on the real wrapper.
         const result = Reflect.get(target, key, primitive ? target : receiver);
+        if (result === undefined && !Reflect.getOwnPropertyDescriptor(target, key)) return result;
         let field = data.fields.get(key);
         if (!field || !Object.is(field.value, result)) {
           const from = meta(result)?.sources || (data.sourceRoot && typeof key !== 'symbol'

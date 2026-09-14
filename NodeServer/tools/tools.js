@@ -145,6 +145,7 @@ function getExpression(ast, source, location) {
     else p.skip();
   } });
   if (!leaf) return { expression: null, statement: null, update: null, candidates: [] };
+  if (leaf.findParent(p => isHelper(p.node, 'capture'))) return { expression: null, statement: null, update: null, candidates: [] };
   let expression, statement, update;
   const candidates = [];
   for (let p = leaf; p && !p.isProgram(); p = p.parentPath) {
@@ -157,7 +158,7 @@ function getExpression(ast, source, location) {
       break;
     }
     // Direct computed call arguments and concise arrow returns were missing.
-    if (p.parentPath?.isCallExpression() && p.listKey === 'arguments' && p.isExpression()) {
+    if (p.parentPath?.isCallExpression() && p.listKey === 'arguments' && p.isExpression() && !p.isIdentifier() && !p.isMemberExpression() && !isHelper(p.parentPath.node)) {
       expression = p.node; candidates.push(p.node.loc); break;
     }
     if (p.parentPath?.isArrowFunctionExpression() && p.key === 'body' && p.isExpression()) {
@@ -220,7 +221,7 @@ function parseStack(stack) {
     const firefox = /^(.*?)@(.+):(\d+):(\d+)$/.exec(line);
     const match = chromium || firefox;
     if (!match) continue;
-    frames.push({ functionName: match[1] || undefined, fileURL: match[2], line: Number(match[3]), column: Number(match[4]) });
+    frames.push({ functionName: match[1] || undefined, fileURL: match[2].replace(/^async /, ''), line: Number(match[3]), column: Number(match[4]) });
   }
   return frames;
 }
