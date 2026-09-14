@@ -89,3 +89,12 @@ test('report failures and buffer overflow remain visible and flush waits', async
   assert.ok(result.failures.includes('event-buffer-overflow'));
   assert.ok(result.failures.some(s => s.includes('offline')));
 });
+test('native array predicates use the original boolean value', () => {
+  const t = setup();
+  const p = t.source([{yes:false},{yes:true}]);
+  assert.equal(t.raw(p.filter(x=>x.yes).length),1);
+  assert.equal(t.raw(p.every(x=>x.yes)),false);
+  assert.equal(t.raw(p.findIndex(x=>x.yes)),1);
+  const fn=function(){};const obj=t.source({fn});
+  assert.equal(t.raw(obj.fn),fn);
+});

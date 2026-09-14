@@ -1,5 +1,6 @@
 const createRuntime = require('./runtime');
 const installNetworkHooks = require('./network');
+const installSinkHooks = require('./sinks');
 
 // Playwright serializes this function; put its dependencies in the function body
 // so initialization is atomic and does not depend on addInitScript ordering.
@@ -12,7 +13,9 @@ const injectedFunction = new Function('options', `
   globalThis.index = options.round ?? 0;
   globalThis.varProxy = runtime.varProxy;
   const restoreNetwork = (${installNetworkHooks.toString()})(globalThis, runtime, options);
+  const restoreSinks = (${installSinkHooks.toString()})(globalThis, runtime);
   globalThis.unFalconProxy = () => {
+    restoreSinks();
     restoreNetwork();
     runtime.stop();
     delete globalThis.__mockingbird;

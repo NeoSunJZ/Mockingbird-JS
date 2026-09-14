@@ -79,7 +79,7 @@ async function runScenario(config, options = {}) {
           })()));
         }
         context.on('page',page=>{
-          page.on('pageerror',error=>{errors.push(error.message);report({kind:'pageerror',message:error.message});});
+          page.on('pageerror',error=>{errors.push(error.message);report({kind:'pageerror',message:error.message,stack:error.stack});});
           page.on('requestfailed',request=>report({kind:'requestfailed',url:request.url(),failure:request.failure()}));
           page.on('response',response=>{if(response.url().includes(config.targetAPI)){targetResponses++;lastEvent=Date.now();}});
           page.on('worker',worker=>report({kind:'gap',reason:'worker',url:worker.url()}));

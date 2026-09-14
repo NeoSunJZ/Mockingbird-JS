@@ -55,6 +55,12 @@ function createTraceRuntime(host, options = {}) {
     if (value === null || value === undefined) return value;
     if (typeof value === 'function') return callable(value);
     const primitive = !isObject(value);
+    // DOM objects must keep their native identity and internal slots. Metadata
+    // can be attached out-of-band; never proxy an Element returned by rendering.
+    if (!primitive && host.Node && value instanceof host.Node) {
+      metadata.set(value, { raw: value, sources, primitive: false, hostObject: true });
+      return value;
+    }
     if (!primitive && objectProxies.has(value)) {
       const proxy = objectProxies.get(value);
       const data = meta(proxy);
@@ -66,13 +72,15 @@ function createTraceRuntime(host, options = {}) {
     const data = { raw: value, sources, primitive, fields: new Map(), ...info };
     const proxy = new Proxy(target, {
       get(target, key, receiver) {
+        if (primitive && key === '__v_skip') return true; // Vue 3 must not proxy our primitive wrappers again.
         if (primitive && (key === 'toJSON' || key === Symbol.toPrimitive)) return () => raw(receiver);
         // Native primitive accessors need internal slots on the real wrapper.
-        const result = Reflect.get(target, key, primitive ? target : receiver);
+        const internal = value instanceof Map || value instanceof Set || value instanceof Date || value instanceof RegExp || ArrayBuffer.isView(value);
+        const result = Reflect.get(target, key, primitive || internal ? target : receiver);
         if (result === undefined && !Reflect.getOwnPropertyDescriptor(target, key)) return result;
         let field = data.fields.get(key);
         if (!field || !Object.is(field.value, result)) {
-          const from = meta(result)?.sources || (data.sourceRoot && typeof key !== 'symbol'
+          const from = meta(result)?.sources || (data.sourceRoot && typeof key !== 'symbol' && typeof result !== 'function' && !(Array.isArray(target) && key === 'length')
             ? [`${data.sourceRoot}:${data.path || ''}/${pointer(key)}`] : data.sources);
           field = { value: result, sources: from };
           data.fields.set(key, field);
@@ -140,8 +148,14 @@ function createTraceRuntime(host, options = {}) {
           ArrayBuffer.isView(data.raw));
         const arraySearch = data && Array.isArray(data.raw) &&
           [Array.prototype.includes, Array.prototype.indexOf, Array.prototype.lastIndexOf].includes(target);
-        const result = Reflect.apply(target, internal || arraySearch ? data.raw : receiver,
-          internal || arraySearch ? args.map(value => meta(value)?.raw ?? value) : args);
+        let forwarded = internal || arraySearch ? args.map(value => meta(value)?.raw ?? value) : args;
+        const predicates = [Array.prototype.filter, Array.prototype.find, Array.prototype.findIndex,
+          Array.prototype.findLast, Array.prototype.findLastIndex, Array.prototype.some, Array.prototype.every, Array.prototype.sort];
+        if (data && Array.isArray(data.raw) && predicates.includes(target) && typeof args[0] === 'function') {
+          forwarded = [...args];
+          forwarded[0] = function (...values) { return raw(Reflect.apply(args[0], this, values)); };
+        }
+        const result = Reflect.apply(target, internal || arraySearch ? data.raw : receiver, forwarded);
         // Iterators and promises have internal slots; their individual yielded
         // values are observed through the proxied array, not a proxy of next().
         if (result instanceof Promise || [Array.prototype.values, Array.prototype.keys, Array.prototype.entries,
@@ -154,6 +168,7 @@ function createTraceRuntime(host, options = {}) {
         return wrap(result, from);
       }
     });
+    metadata.set(proxy, { raw: fn, sources: [], primitive: false });
     functionProxies.set(fn, proxy);
     return proxy;
   }
