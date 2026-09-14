@@ -1,0 +1,53 @@
+{
+  "date": "2026-09-14T16:26:25.284Z",
+  "implementationCommit": "11d24472d141aaa53904805f5df15b181cca4982",
+  "versions": {
+    "node": "v26.0.0",
+    "playwright": "1.62.1",
+    "react": "19.1.1",
+    "vue": "3.4.21",
+    "babel": "7.24.5"
+  },
+  "verification": {
+    "unitTests": 26,
+    "browserTests": 6
+  },
+  "frameworks": {
+    "react": {
+      "fixture": "tests/browser/frameworks.test.js",
+      "rawEvidence": "/var/folders/9l/v7s2lq995d76mr6vcvlglwcc0000gn/T/mockingbird-react-iqSIaV",
+      "status": "incomplete",
+      "reason": "no-new-supported-sites",
+      "tracedRounds": 7,
+      "allSnapshotsMatchBaseline": true,
+      "finalText": "Alice43NOinc",
+      "pageErrors": [],
+      "sinkFields": [
+        "/name",
+        "/n",
+        "/flag"
+      ],
+      "gapReasons": {
+        "nullish-propagation": 236
+      }
+    },
+    "vue": {
+      "fixture": "tests/browser/frameworks.test.js",
+      "rawEvidence": "/var/folders/9l/v7s2lq995d76mr6vcvlglwcc0000gn/T/mockingbird-vue-QC4una",
+      "status": "incomplete",
+      "reason": "no-new-supported-sites",
+      "tracedRounds": 7,
+      "allSnapshotsMatchBaseline": true,
+      "finalText": "Alice43NOinc",
+      "pageErrors": [],
+      "sinkFields": [
+        "/name",
+        "/n",
+        "/flag"
+      ],
+      "gapReasons": {
+        "nullish-propagation": 283
+      }
+    }
+  }
+}

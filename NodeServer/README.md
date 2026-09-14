@@ -1,63 +1,83 @@
-# Mockingbird: Core Framework Server
+# Mockingbird: iterative response-data tracing
 
-This directory contains the core algorithmic implementation of the Mockingbird framework. It is a Node.js application responsible for orchestrating the entire gray-box testing process.
+Mockingbird runs a configured browser scenario, boxes values read from a target API, and uses the resulting execution locations to add tracing to subsequent runs. It retains the original **boxing → observe → rewrite → replay** approach.
 
-## Core Functionality
+The runner now executes an unmodified baseline before tracing. It writes structured evidence and distinguishes a completed observation interval from unsupported propagation or a failed scenario. A successful run is not a proof that every use in the application has been covered, and this repository does not yet implement a complete EDE classifier.
 
-The Mockingbird server performs the following key tasks:
+## Install and run
 
-1.  **Browser Automation**: It uses Playwright to launch and control a browser instance, navigating to the target web application.
-2.  **Network Interception**: It leverages the Chrome DevTools Protocol (CDP) to intercept network requests, specifically for JavaScript files (`.js`) and HTML documents.
-3.  **Dynamic Instrumentation**: It injects a custom JavaScript payload (`injected.js`) into the browser context. This payload hooks into browser APIs (`fetch`, `XHR`, `JSON.parse`) to wrap target API responses in `Proxy` objects.
-4.  **Runtime Data Tracing**: The `Proxy` objects track every property access on the API response data. When an access occurs, it reports the call stack and access details back to this Node.js server.
-5.  **Static Analysis & Code Rewriting**: Upon receiving a data access report, the server reads the corresponding local script file, uses Babel to parse it into an Abstract Syntax Tree (AST), and identifies the exact expression or statement responsible for the access.
-6.  **Iterative Enhancement**: It adds the newly discovered data access points (variable assignments, return statements) to a watchlist (`wrapLists`). In the next iteration, it rewrites the JavaScript file's AST to wrap these expressions with a tracer function (`varProxy`), ensuring deeper data flow tracking in subsequent runs.
+Requires Node.js 20 or newer. The checked-in lockfile pins the tested dependencies.
 
-This "execute-analyze-rewrite" loop allows Mockingbird to progressively uncover the complete usage of an API's response data throughout the front-end codebase.
+```sh
+npm ci
+npx playwright install chromium
+HEADLESS=1 node ede-killer.js test
+```
 
-## File Structure
+Omit `HEADLESS=1` for a visible browser. `BROWSER_PATH` can select a compatible installed Chromium executable. Chromium is the supported browser because script interception uses CDP.
 
-- **/tools/**: Contains the core logic modules.
-  - `tools.js`: Houses all the static analysis functions using Babel (AST parsing, traversal, and code generation).
-  - `injected.js`: The client-side JavaScript payload that is injected into the browser to perform dynamic data tracing with Proxies.
-  - `command.js`: A module for executing automated browser actions defined in config files.
-- **/configs/**: Contains configuration files that define the testing scenarios. Each `.config` file specifies the target URL, the target API to be traced, and a sequence of browser actions (e.g., `LOAD`, `CLICK`, `INPUT`).
-- **/logs/**: The output directory where all testing artifacts are saved, including raw access logs, modified scripts, and analysis results.
-- `ede-killer.js`: The main entry point of the server. It reads the configuration, launches the browser, and manages the iterative testing loop.
+The default `test` configuration still expects the demo frontend and API to be running. The runner does not start those services. Either pass a name under `configs/` or an explicit `.config` path:
 
-## Setup and Installation
+```sh
+node ede-killer.js /absolute/path/scenario.config
+```
 
-1.  Navigate to this directory in your terminal:
+Example configuration (LF and CRLF are accepted):
 
-    ```bash
-    cd NodeServer
-    ```
+```text
+TARGET /api/user
+LOAD http://127.0.0.1:4173/
+CLICK //button[@id='load']
+WAIT_FOR_RESPONSE /api/user
+WAIT_FOR_FUNCTION document.querySelector('#name').textContent.length > 0
+```
 
-2.  Install the required Node.js dependencies:
-    ```bash
-    npm install
-    ```
+An immediately following response/navigation/event wait is registered before the preceding action. Quoted selectors and input values are supported. Unknown commands and unsupported context/video/HAR operations fail explicitly. `GET_COOKIES`, `GET_LOCALSTORAGE`, and `GET_SESSIONSTORAGE` write command-result records. `COOKIE name=value` uses the current HTTP origin or the following `LOAD` origin.
 
-## How to Run
+Each round starts from a fresh browser context, with service workers blocked. Server-side state is not reset. Scenarios that mutate persistent server data or depend on changing responses may require a controlled test fixture.
 
-The framework is driven by configuration files.
+## Output and status
 
-1.  **Choose a Configuration**: Select a test case from the `/configs` directory (e.g., `shop.config`).
+Every invocation creates a fresh `logs/<scenario>-<timestamp>/` directory:
 
-2.  **Run the Server**: Execute the main script from the command line, passing the name of the configuration file (without the `.config` extension) as an argument.
+- `summary.json`: baseline comparisons, per-round results, script manifest, and coverage gaps.
+- `cycle-<round>.jsonl`: full events with source, stack, code location, value IDs and parent IDs. Round `-1` is the baseline.
+- `src/<id>.original.js`: original scripts, identified by full URL and content hash.
+- `src/<id>.<generation>.js`: the exact rewritten scripts served to the browser.
 
-    ```bash
-    node ede-killer.js <config_name>
-    ```
+A synthetic `mockingbird://scripts/...` source URL connects stack frames to the exact served generation. Redirects, query strings, identical basenames, `.mjs`, and other browser-classified script resources do not share positions accidentally.
 
-    **Example**:
+Status meanings:
 
-    ```bash
-    node ede-killer.js test
-    ```
+- `converged`: the configured observation interval settled, the checked snapshot matched the baseline, and no new supported sites or reported gaps remained.
+- `incomplete`: an observed coverage gap, changed behavior, observation timeout, or round limit prevents a complete result.
+- `failed`: a configuration, action, or runner operation failed.
 
-3.  **Execution Process**:
-    - A browser window will open and automatically perform the actions defined in the config file.
-    - The console will display logs from the server and the browser.
-    - The process will run in a loop, refining the code instrumentation in each cycle, until no new data access patterns are discovered.
-    - All output, including the detailed `usevar.log`, will be saved to the corresponding directory under `/logs` (e.g., `/logs/test/`).
+The CLI exits nonzero for `incomplete` and `failed`. The baseline compares the active page's URL, title, body text and form values, and checks page errors. It does not prove equality of all network effects, storage, layout, timing, iframe contents or future interactions. Add explicit `WAIT_FOR_FUNCTION` assertions for the scenario's intended final state.
+
+## Implementation
+
+- `tools/runtime.js`: lazy primitive/object proxies; metadata in WeakMaps; source/value identities; synchronous capture; bounded event reporting.
+- `tools/network.js`: target fetch/XHR readers, without body envelopes or replacing native Response/XHR constructors.
+- `tools/tools.js`: Babel semantic protection, source-location analysis and iterative expression rewriting.
+- `tools/scripts.js`: script identity, served generations and instrumentation candidates.
+- `tools/intercept.js`: CDP response interception, including redirected script responses.
+- `tools/sinks.js`: supported native DOM/storage boundaries; detached text provenance is consumed when attached.
+- `tools/injected.js`: one atomic initialization payload per browser realm.
+- `tools/command.js`: scenario actions and explicit failures.
+- `ede-killer.js`: baseline, replay, settling, flush and reporting.
+
+The first pass parses each intercepted script and inserts basic semantic adapters for conditions, logical operations, equality, `typeof`, `switch`, and selected native conversions. Propagation captures are still added iteratively at observed locations. Capture evaluates the expression once; it does not reread extracted dependencies. Ordinary identifier/property `++` and `--` now preserve numeric conversion, prefix/postfix values and source metadata.
+
+Use `globalThis.__mockingbird.meta(value)`, `.labels(value)` and `.raw(value)` to inspect tracer metadata. `_f_src` / `_f_from` are no longer injected into business objects. Origins use response occurrence IDs plus JSON Pointer paths; downstream consumers of the old `root[field]` log format need to migrate.
+
+## Verification and limits
+
+```sh
+npm test
+npm run test:browser
+```
+
+The browser tests serve isolated local fixtures. They include native response behavior, redirected ES modules, baseline/iteration checks, DOM sink accuracy, and React 19.1.1 / Vue 3.4.21 production rendering with a click update. No external application is needed for these tests.
+
+See [implementation status](docs/implementation-status.md) and [machine-readable evidence](docs/implementation-evidence.json) for the verified scope. Important remaining boundaries include `null`/`undefined` propagation, suspended expressions, arbitrary native APIs, custom classes/private fields, frozen properties, uninstrumented inline/eval/worker code, and conservative dependency merging. Metadata is not recovered by matching equal string values. Existing framework fixtures preserve rendering and reach DOM sinks, but still report `incomplete` for nullish propagation gaps.

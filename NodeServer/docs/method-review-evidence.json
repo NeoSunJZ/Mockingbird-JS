@@ -1,0 +1,987 @@
+{
+  "reviewDate": "2026-09-14",
+  "sourceCommit": "cf245f2",
+  "sourceHashes": {
+    "ede-killer.js": "7bea045fe3d81c516cef8a73263095a1e3e836cead0e1a0c3562592f2dc6362f",
+    "tools/injected.js": "53f61686d5e036f760dfadab284bbf35c8e948dc8d4ac22d5eb182385ed4e737",
+    "tools/tools.js": "698a868cce64eceea022f7d75c37deaed32abf6eec914ad35c7d4f91b651622e",
+    "tools/command.js": "788cda36bafcd813d328197b9aee3df27c8a3ad3d2c888cf762af6a09de3e013"
+  },
+  "nodeVersion": "v26.0.0",
+  "dependencyVersions": {
+    "@babel/parser": "7.24.5",
+    "@babel/traverse": "7.24.5",
+    "@babel/generator": "7.24.5",
+    "@babel/types": "7.24.5",
+    "lodash": "4.17.21",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "vue": "3.4.21"
+  },
+  "scope": "Current repository functions isolated in Node and browser; full ede-killer iterative runner not executed. toDisplayString reboxing explicitly modeled.",
+  "probes": [
+    {
+      "name": "primitive semantics",
+      "value": {
+        "flag": true,
+        "zero": true,
+        "empty": true,
+        "type": "object",
+        "equal": false
+      },
+      "from": [
+        "root[flag]",
+        "root[n]",
+        "root[s]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "null read",
+      "value": {
+        "error": "Cannot read properties of null (reading '_f_from')"
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "null write",
+      "value": {
+        "error": "Cannot read properties of null (reading 'hasOwnProperty')"
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "string reparsed after derivation",
+      "value": {
+        "rawType": "number",
+        "value": "123"
+      },
+      "from": [
+        "root[s]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "JSON serialization",
+      "value": "{\"n\":{},\"b\":{},\"s\":{\"0\":\"H\",\"1\":\"i\"}}",
+      "from": [
+        "root[n]",
+        "root[b]",
+        "root[s]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "array push changes detached copy",
+      "value": {
+        "returnedLength": 3,
+        "actualLength": 2,
+        "third": "undefined",
+        "rawLength": 3
+      },
+      "from": [
+        "root[a]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "array slice loses item provenance",
+      "value": {
+        "value": "A",
+        "source": null
+      },
+      "from": [
+        "root[a]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "array for of loses item provenance",
+      "value": {
+        "value": "A",
+        "source": null
+      },
+      "from": [
+        "root[a]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "array map identity remains boxed",
+      "value": {
+        "value": "1",
+        "source": [
+          "root[a][0]"
+        ]
+      },
+      "from": [
+        "root[a]",
+        "root[a][0]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "reconstructed object field paths",
+      "value": {
+        "object": [
+          "root[a]",
+          "root[b]"
+        ],
+        "x": [
+          "root[a][x]"
+        ],
+        "y": [
+          "root[a][y]"
+        ]
+      },
+      "from": [
+        "root[a]",
+        "root[b]",
+        "root[a][x]",
+        "root[a][y]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "object containing existing proxy",
+      "value": {
+        "objectSource": null,
+        "x": [
+          "root[a]"
+        ]
+      },
+      "from": [
+        "root[a]"
+      ],
+      "warnings": [
+        "deepClone failed : "
+      ]
+    },
+    {
+      "name": "rewritten string method result",
+      "value": {
+        "value": "ALICE",
+        "source": null
+      },
+      "from": [
+        "root[s]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "array method function identity",
+      "value": false,
+      "from": [
+        "root[a]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "source identifier collision",
+      "value": {
+        "source": null,
+        "type": "string"
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "own hasOwnProperty field collision",
+      "value": {
+        "error": "expression.hasOwnProperty is not a function"
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "has and ownKeys do not log presence",
+      "value": {
+        "has": true,
+        "keys": [
+          "secret"
+        ]
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "BigInt derivative",
+      "value": {
+        "error": "BigInt is not a constructor"
+      },
+      "from": [
+        "root[n]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "Map value loses provenance",
+      "value": {
+        "value": 2,
+        "source": null
+      },
+      "from": [
+        "root[n]"
+      ],
+      "warnings": []
+    },
+    {
+      "name": "frozen proxy enumeration",
+      "value": {
+        "error": "'ownKeys' on proxy: trap result did not include '_f_src'"
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "JSON.parse invalid input no longer throws",
+      "value": "returned successfully",
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "already proxied detection targets snapshot",
+      "value": {
+        "methodCheck": false,
+        "descriptorCheck": true
+      },
+      "from": [],
+      "warnings": []
+    },
+    {
+      "name": "getter duplicated by dependency args",
+      "source": "let calls=0;const obj={get n(){return ++calls}};const x=obj.n+1;({calls,x});",
+      "rewritten": "let calls = 0;const obj = { get n() {return ++calls;} };const x = varProxy(obj.n + 1, 1, obj.n);({ calls, x });",
+      "original": {
+        "calls": 1,
+        "x": 2
+      },
+      "instrumented": {
+        "calls": 2,
+        "x": 2
+      }
+    },
+    {
+      "name": "short circuit eager dependency",
+      "source": "const obj=null;const x=obj && obj.name;x;",
+      "rewritten": "const obj = null;const x = varProxy(obj && obj.name, 1, obj, obj.name);x;",
+      "original": null,
+      "instrumented": {
+        "error": "Cannot read properties of null (reading 'name')"
+      }
+    },
+    {
+      "name": "conditional eager dependency",
+      "source": "const obj=null;const x=false ? obj.name : 1;x;",
+      "rewritten": "const obj = null;const x = varProxy(false ? obj.name : 1, 1, obj.name);x;",
+      "original": 1,
+      "instrumented": {
+        "error": "Cannot read properties of null (reading 'name')"
+      }
+    },
+    {
+      "name": "optional member treats property as free variable",
+      "source": "const obj=null;const x=obj?.missing;x;",
+      "rewritten": "const obj = null;const x = varProxy(obj?.missing, 1, obj, missing);x;",
+      "instrumented": {
+        "error": "missing is not defined"
+      }
+    },
+    {
+      "name": "computed receiver duplicated",
+      "source": "let calls=0;function get(){calls++;return {n:1}};const x=get().n+1;({calls,x});",
+      "rewritten": "let calls = 0;function get() {calls++;return { n: 1 };};const x = varProxy(get().n + 1, 1, get().n);({ calls, x });",
+      "original": {
+        "calls": 1,
+        "x": 2
+      },
+      "instrumented": {
+        "calls": 2,
+        "x": 2
+      }
+    },
+    {
+      "name": "compound assignment double index",
+      "source": "let i=0;const a=[1,10];a[i++]+=1;({i,a});",
+      "rewritten": "let i = 0;const a = [1, 10];a[i++] = a[i++] + 1;({ i, a });",
+      "original": {
+        "i": 1,
+        "a": [
+          2,
+          10
+        ]
+      },
+      "instrumented": {
+        "i": 2,
+        "a": [
+          11,
+          10
+        ]
+      }
+    },
+    {
+      "name": "compound assignment double receiver",
+      "source": "let calls=0;const obj={n:1};function getObj(){calls++;return obj}getObj().n+=1;({calls,n:obj.n});",
+      "rewritten": "let calls = 0;const obj = { n: 1 };function getObj() {calls++;return obj;}getObj().n = getObj().n + 1;({ calls, n: obj.n });",
+      "original": {
+        "calls": 1,
+        "n": 2
+      },
+      "instrumented": {
+        "calls": 2,
+        "n": 2
+      }
+    },
+    {
+      "name": "method reference extraction",
+      "source": "const x=data.name.toUpperCase();",
+      "rewritten": "const x = varProxy(data.name.toUpperCase(), 1, data.name.toUpperCase);"
+    },
+    {
+      "name": "expression selection",
+      "code": "consume(data.name + \"!\");",
+      "expression": {
+        "type": "CallExpression",
+        "left": null,
+        "code": "consume(data.name+\"!\")"
+      },
+      "statement": null
+    },
+    {
+      "name": "expression selection",
+      "code": "const fn = x => x + 1;",
+      "expression": null,
+      "statement": null
+    },
+    {
+      "name": "expression selection",
+      "code": "const {x} = data;",
+      "expression": {
+        "type": "VariableDeclarator",
+        "left": null,
+        "code": "{x}=data"
+      },
+      "statement": null
+    },
+    {
+      "name": "stack parse",
+      "stack": "Error\n    at http://127.0.0.1:4173/app.js:2:3",
+      "result": []
+    },
+    {
+      "name": "stack parse",
+      "stack": "Error\n    at render (http://127.0.0.1:4173/app.js:2:3)",
+      "result": [
+        {
+          "functionName": "render",
+          "fileURL": "http://127.0.0.1:4173/app.js",
+          "line": 2,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "browser": {
+    "versions": {
+      "react": "19.1.1",
+      "vue": "3.4.21",
+      "browser": "151.0.7922.34"
+    },
+    "results": [
+      {
+        "name": "react number",
+        "baseline": {
+          "text": "42",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "42"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "",
+          "error": "Objects are not valid as a React child (found: object with keys {}). If you meant to render a collection of children, use an array instead.",
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.toString (<anonymous>)\n    at throwOnInvalidObjectType (http://127.0.0.1:64125/react.js:6668:51)\n    at reconcileChildFibersImpl (http://127.0.0.1:64125/react.js:7270:15)\n    at http://127.0.0.1:64125/react.js:7290:37\n    at reconcileChildren (http://127.0.0.1:64125/react.js:7673:55)\n    at beginWork (http://127.0.0.1:64125/react.js:9059:106)\n    at runWithFiberInDEV (http://127.0.0.1:64125/react.js:2714:74)\n    at performUnitOfWork (http://127.0.0.1:64125/react.js:12103:84)\n    at workLoopSync (http://127.0.0.1:64125/react.js:11957:45)"
+            },
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at getIteratorFn (http://127.0.0.1:64125/react.js:1722:65)\n    at reconcileChildFibersImpl (http://127.0.0.1:64125/react.js:7230:19)\n    at http://127.0.0.1:64125/react.js:7290:37\n    at reconcileChildren (http://127.0.0.1:64125/react.js:7673:55)\n    at beginWork (http://127.0.0.1:64125/react.js:9059:106)\n    at runWithFiberInDEV (http://127.0.0.1:64125/react.js:2714:74)\n    at performUnitOfWork (http://127.0.0.1:64125/react.js:12103:84)\n    at workLoopSync (http://127.0.0.1:64125/react.js:11957:45)\n    at renderRootSync (http://127.0.0.1:64125/react.js:11940:15)"
+            },
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.toString (<anonymous>)\n    at throwOnInvalidObjectType (http://127.0.0.1:64125/react.js:6668:51)\n    at reconcileChildFibersImpl (http://127.0.0.1:64125/react.js:7270:15)\n    at http://127.0.0.1:64125/react.js:7290:37\n    at reconcileChildren (http://127.0.0.1:64125/react.js:7673:55)\n    at beginWork (http://127.0.0.1:64125/react.js:9059:106)\n    at runWithFiberInDEV (http://127.0.0.1:64125/react.js:2714:74)\n    at performUnitOfWork (http://127.0.0.1:64125/react.js:12103:84)\n    at workLoopSync (http://127.0.0.1:64125/react.js:11957:45)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "react string",
+        "baseline": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "createTextNode",
+              "type": "string",
+              "from": null,
+              "value": "A"
+            },
+            {
+              "key": "createTextNode",
+              "type": "string",
+              "from": null,
+              "value": "l"
+            },
+            {
+              "key": "createTextNode",
+              "type": "string",
+              "from": null,
+              "value": "i"
+            },
+            {
+              "key": "createTextNode",
+              "type": "string",
+              "from": null,
+              "value": "c"
+            },
+            {
+              "key": "createTextNode",
+              "type": "string",
+              "from": null,
+              "value": "e"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "prop": "2",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:255:21)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:245:14)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)"
+            },
+            {
+              "prop": "length",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:244:31)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)\n    at UtilityScript.jsonValue (<anonymous>:325:12)\n    at safeJson (<anonymous>:330:21)\n    at <anonymous>:338:16"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "name",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:206)\n    at exports.flushSync (http://127.0.0.1:64125/react.js:1336:22)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:147)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "react false conditional",
+        "baseline": {
+          "text": "NO",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "NO"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "YES",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "YES"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "prop": "2",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:255:21)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:245:14)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)"
+            },
+            {
+              "prop": "length",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:244:31)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)\n    at UtilityScript.jsonValue (<anonymous>:325:12)\n    at safeJson (<anonymous>:330:21)\n    at <anonymous>:338:16"
+            },
+            {
+              "from": [
+                "root[flag]"
+              ],
+              "prop": "flag",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:206)\n    at exports.flushSync (http://127.0.0.1:64125/react.js:1336:22)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:147)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "react explicit String",
+        "baseline": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice"
+            },
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": ""
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "prop": "length",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:244:31)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)\n    at UtilityScript.jsonValue (<anonymous>:325:12)\n    at safeJson (<anonymous>:330:21)\n    at <anonymous>:338:16"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "name",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:213)\n    at exports.flushSync (http://127.0.0.1:64125/react.js:1336:22)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:147)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at String (<anonymous>)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:204)\n    at exports.flushSync (http://127.0.0.1:64125/react.js:1336:22)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:147)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "vue template name and number",
+        "baseline": {
+          "text": "Alice / 42",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice / 42"
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "Alice / 42",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice / 42"
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "n",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Reflect.get (<anonymous>)\n    at MutableReactiveHandler.get (http://127.0.0.1:64125/vue.js:830:27)\n    at Proxy.render (eval at compileToFunction (http://127.0.0.1:64125/vue.js:16501:20), <anonymous>:9:114)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)"
+            },
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.toString (<anonymous>)\n    at toTypeString (http://127.0.0.1:64125/vue.js:44:50)\n    at toRawType (http://127.0.0.1:64125/vue.js:46:12)\n    at getTargetType (http://127.0.0.1:64125/vue.js:1242:95)\n    at createReactiveObject (http://127.0.0.1:64125/vue.js:1297:24)\n    at reactive (http://127.0.0.1:64125/vue.js:1248:12)\n    at MutableReactiveHandler.get (http://127.0.0.1:64125/vue.js:844:46)\n    at Proxy.render (eval at compileToFunction (http://127.0.0.1:64125/vue.js:16501:20), <anonymous>:9:114)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)"
+            },
+            {
+              "from": [
+                "root[n]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Reflect.get (<anonymous>)\n    at MutableReactiveHandler.get (http://127.0.0.1:64125/vue.js:830:27)\n    at String (<anonymous>)\n    at toDisplayString (http://127.0.0.1:64125/vue.js:332:186)\n    at Proxy.render (eval at compileToFunction (http://127.0.0.1:64125/vue.js:16501:20), <anonymous>:9:95)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "vue false conditional",
+        "baseline": {
+          "text": "NO",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "NO"
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "YES",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "YES"
+            }
+          ],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "from": [
+                "root"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.toString (<anonymous>)\n    at toTypeString (http://127.0.0.1:64125/vue.js:44:50)\n    at toRawType (http://127.0.0.1:64125/vue.js:46:12)\n    at getTargetType (http://127.0.0.1:64125/vue.js:1242:95)\n    at createReactiveObject (http://127.0.0.1:64125/vue.js:1297:24)\n    at reactive (http://127.0.0.1:64125/vue.js:1248:12)\n    at toReactive (http://127.0.0.1:64125/vue.js:1333:51)\n    at new RefImpl (http://127.0.0.1:64125/vue.js:1459:45)\n    at createRef (http://127.0.0.1:64125/vue.js:1451:12)"
+            },
+            {
+              "from": [
+                "root[flag]"
+              ],
+              "prop": "flag",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Reflect.get (<anonymous>)\n    at MutableReactiveHandler.get (http://127.0.0.1:64125/vue.js:830:27)\n    at Proxy.render (eval at compileToFunction (http://127.0.0.1:64125/vue.js:16501:20), <anonymous>:9:79)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)"
+            },
+            {
+              "from": [
+                "root[flag]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.toString (<anonymous>)\n    at toTypeString (http://127.0.0.1:64125/vue.js:44:50)\n    at toRawType (http://127.0.0.1:64125/vue.js:46:12)\n    at getTargetType (http://127.0.0.1:64125/vue.js:1242:95)\n    at createReactiveObject (http://127.0.0.1:64125/vue.js:1297:24)\n    at reactive (http://127.0.0.1:64125/vue.js:1248:12)\n    at MutableReactiveHandler.get (http://127.0.0.1:64125/vue.js:844:46)\n    at Proxy.render (eval at compileToFunction (http://127.0.0.1:64125/vue.js:16501:20), <anonymous>:9:79)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "vue h boxed string",
+        "baseline": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice"
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "",
+          "error": null,
+          "sinks": [],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "prop": "2",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:255:21)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:245:14)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)"
+            },
+            {
+              "prop": "length",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at innerSerialize (<anonymous>:244:31)\n    at serialize (<anonymous>:184:10)\n    at innerSerialize (<anonymous>:262:30)\n    at serialize (<anonymous>:184:10)\n    at serializeAsCallArgument (<anonymous>:173:10)\n    at UtilityScript.jsonValue (<anonymous>:325:12)\n    at safeJson (<anonymous>:330:21)\n    at <anonymous>:338:16"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "name",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.render (eval at evaluate (:311:30), <anonymous>:1:56)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)\n    at processComponent (http://127.0.0.1:64125/vue.js:7351:11)\n    at patch (http://127.0.0.1:64125/vue.js:6830:13)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "vue display string reboxed",
+        "baseline": {
+          "text": "Alice",
+          "error": null,
+          "sinks": [
+            {
+              "key": "textContent",
+              "type": "string",
+              "from": null,
+              "value": "Alice"
+            }
+          ],
+          "paths": [],
+          "traceTail": [],
+          "errors": []
+        },
+        "tracked": {
+          "text": "",
+          "error": null,
+          "sinks": [],
+          "paths": [
+            "root",
+            "root[name]",
+            "root[n]",
+            "root[flag]",
+            "root[tags]",
+            "root[tags][0]",
+            "root[tags][0][label]"
+          ],
+          "traceTail": [
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at String (<anonymous>)\n    at Object.toDisplayString (http://127.0.0.1:64125/vue.js:332:186)\n    at Proxy.render (eval at evaluate (:311:30), <anonymous>:1:67)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "name",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at Proxy.render (eval at evaluate (:311:30), <anonymous>:1:95)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)\n    at processComponent (http://127.0.0.1:64125/vue.js:7351:11)\n    at patch (http://127.0.0.1:64125/vue.js:6830:13)"
+            },
+            {
+              "from": [
+                "root[name]"
+              ],
+              "prop": "[symbol]",
+              "stack": "Error\n    at Object.get (eval at evaluate (:311:30), <anonymous>:123:23)\n    at window.varProxy (eval at evaluate (:311:30), <anonymous>:78:40)\n    at Proxy.render (eval at evaluate (:311:30), <anonymous>:1:54)\n    at renderComponentRoot (http://127.0.0.1:64125/vue.js:2448:18)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://127.0.0.1:64125/vue.js:7488:48)\n    at ReactiveEffect.run (http://127.0.0.1:64125/vue.js:532:21)\n    at instance.update (http://127.0.0.1:64125/vue.js:7619:18)\n    at setupRenderEffect (http://127.0.0.1:64125/vue.js:7629:7)\n    at mountComponent (http://127.0.0.1:64125/vue.js:7397:9)\n    at processComponent (http://127.0.0.1:64125/vue.js:7351:11)"
+            }
+          ],
+          "errors": []
+        }
+      },
+      {
+        "name": "Vue reactivity identity",
+        "value": {
+          "toRawSame": true,
+          "nameSource": [
+            "root[name]"
+          ],
+          "isReactive": true
+        },
+        "errors": []
+      },
+      {
+        "name": "network baseline",
+        "value": {
+          "responseURL": "http://127.0.0.1:64125/api",
+          "text": "{\"name\":\"Alice\",\"n\":42,\"flag\":false,\"tags\":[{\"label\":\"one\"}]}",
+          "stream": "resolved",
+          "xhrStaticDone": 4,
+          "events": [
+            {
+              "at": "readystatechange4",
+              "type": "number",
+              "source": null
+            },
+            {
+              "at": "load",
+              "type": "number",
+              "source": null
+            }
+          ]
+        },
+        "errors": []
+      },
+      {
+        "name": "network tracked",
+        "value": {
+          "responseURL": "",
+          "text": "{\"ismocking\":true,\"src\":\"{\\\"name\\\":\\\"Alice\\\",\\\"n\\\":42,\\\"flag\\\":false,\\\"tags\\\":[{\\\"label\\\":\\\"one\\\"}]}\"}",
+          "stream": "timed out after 500ms",
+          "xhrStaticDone": null,
+          "events": [
+            {
+              "at": "readystatechange4",
+              "type": "number",
+              "source": null
+            },
+            {
+              "at": "load",
+              "type": "object",
+              "source": [
+                "root[n]"
+              ]
+            }
+          ]
+        },
+        "errors": []
+      }
+    ]
+  }
+}
