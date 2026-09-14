@@ -174,6 +174,7 @@ function createTraceRuntime(host, options = {}) {
   }
   const runtime = {
     source, raw, capture, meta, labels, gap, emit,
+    key(value) { return Reflect.ownKeys({ [raw(value)]: 0 })[0]; },
     condition(value) { observe('control', labels(value)); return !!raw(value); },
     sink(kind, value, detail = {}) {
       observe('sink', labels(value), { sink: kind, ...detail });

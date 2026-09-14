@@ -1,9 +1,11 @@
 {
   "name": "nodeserver",
   "version": "1.0.0",
-  "main": "test.js",
+  "main": "ede-killer.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js",
+    "test:browser": "node --test tests/browser/*.test.js",
+    "start": "node ede-killer.js"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,10 @@
   "devDependencies": {
     "@babel/cli": "^7.24.5",
     "@babel/core": "^7.24.5",
-    "@babel/preset-env": "^7.24.5"
+    "@babel/generator": "^7.24.5",
+    "@babel/parser": "^7.24.5",
+    "@babel/preset-env": "^7.24.5",
+    "@babel/traverse": "^7.24.5",
+    "@babel/types": "^7.24.5"
   }
 }
