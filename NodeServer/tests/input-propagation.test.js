@@ -70,3 +70,11 @@ test('discarded call outputs do not produce nullish propagation gaps',()=>{
  const s='function consume(x){}const data=__mockingbird.source(2);consume(data);__mockingbird.events.some(e=>e.kind==="gap"&&e.reason==="nullish-propagation");';
  assert.equal(execute(s,['CallExpression']).value,false);
 });
+test('container siblings do not contaminate unrelated method results or static key names',()=>{
+ const s='const data=__mockingbird.source(2);const obj={value:data,method(x){return x+1;}};const n=obj.method(0);const keys=Object.keys(obj);JSON.stringify([n,__mockingbird.labels(n),__mockingbird.labels(keys),__mockingbird.labels(keys[0])]);';
+ assert.equal(execute(s).value,'[1,[],[],[]]');
+});
+test('methods that actually read this fields still propagate through their return',()=>{
+ const s='const data=__mockingbird.source(2);const obj={value:data,method(){return this.value+1;}};const n=obj.method();JSON.stringify([Number(n),__mockingbird.labels(n)]);';
+ assert.equal(execute(s).value,'[3,["test/response#1:"]]');
+});

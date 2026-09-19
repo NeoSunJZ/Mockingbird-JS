@@ -71,7 +71,7 @@ function createTraceRuntime(host, options = {}) {
       gap('nullish-propagation', { from: sources });
       return value;
     }
-    if (typeof value === 'function') return callable(value);
+    if (typeof value === 'function') { gap('function-result-summary',{from:sources});return callable(value); }
     const valueId = `${realm}/value#${++valueSequence}`;
     const lineage = { valueId, parents: info.parents || [], precision: info.sourceRoot ? 'source-field' : 'conservative' };
     emit('value', { ...lineage, from: sources });
@@ -112,7 +112,7 @@ function createTraceRuntime(host, options = {}) {
           field = { value: result, sources: from };
           data.fields.set(key, field);
         }
-        observe('get', typeof result === 'function' ? data.sources : field.sources, { prop: String(key), logIndex: round, valueId: data.valueId });
+        observe('get', typeof result === 'function' && (data.sourceRoot || primitive || internal || Array.isArray(target)) ? data.sources : field.sources, { prop: String(key), logIndex: round, valueId: data.valueId });
         const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
         if (descriptor && !descriptor.configurable && 'value' in descriptor && !descriptor.writable) {
           if (!isObject(result) || !meta(result)) gap('fixed-property', { prop: String(key), from: field.sources });
@@ -148,11 +148,11 @@ function createTraceRuntime(host, options = {}) {
         return success;
       },
       has(target, key) {
-        observe('has', data.sources, { prop: String(key), valueId: data.valueId });
+        observe('has', data.sourceRoot ? data.sources : [], { prop: String(key), valueId: data.valueId });
         return Reflect.has(target, key);
       },
       ownKeys(target) {
-        observe('keys', data.sources, { valueId: data.valueId });
+        observe('keys', data.sourceRoot ? data.sources : [], { valueId: data.valueId });
         return Reflect.ownKeys(target);
       }
     });
@@ -197,6 +197,10 @@ function createTraceRuntime(host, options = {}) {
     const from = union(...inputs.map(labels));
     observe('call', from, { method:target?.name, valueId:data?.valueId });
     const intrinsic = nativeMethods.has(target);
+    // A container holding a tracked field is not automatically an input to
+    // every user method on that container. Actual this-field reads are traced.
+    const resultInputs = [fn, selector, ...args];
+    if(intrinsic || arrayMethods.has(target)) resultInputs.push(receiver);
     const actualReceiver = intrinsic && data ? data.raw : receiver;
     let forwarded = args;
     if (conversions.has(target) || target === objectIs) forwarded = args.map(raw);
@@ -209,7 +213,7 @@ function createTraceRuntime(host, options = {}) {
       if ([Array.prototype.includes,Array.prototype.indexOf,Array.prototype.lastIndexOf].includes(target)) {
         forwarded=args.map(raw);
         const result=Reflect.apply(target,data.raw,forwarded);
-        return derive(result,inputs,site);
+        return derive(result,resultInputs,site);
       }
       const predicates=[Array.prototype.filter,Array.prototype.find,Array.prototype.findIndex,
         Array.prototype.findLast,Array.prototype.findLastIndex,Array.prototype.some,Array.prototype.every,Array.prototype.sort];
@@ -226,11 +230,18 @@ function createTraceRuntime(host, options = {}) {
       if(intrinsic && from.length)gap('native-carrier',{method:target.name,from});
       return result;
     }
+    if(target===Object.keys || target===Object.getOwnPropertyNames || target===Object.getOwnPropertySymbols) {
+      if(meta(args[0])?.sourceRoot)gap('structure-propagation',{from:labels(args[0]),method:target.name});
+      return result;
+    }
+    if(target===Object.values)return object(result);
+    if(target===Object.entries)return object(result.map(pair=>object(pair)));
     if ([Map.prototype.get,WeakMap.prototype.get].includes(target)) return derive(result,[result,args[0]],site);
     if ([Map.prototype.set,WeakMap.prototype.set,Set.prototype.add,WeakSet.prototype.add].includes(target)) return result;
     if (Array.isArray(result) && arrayMethods.has(target)) return object(result);
-    if (isObject(result) && !meta(result) && from.length) gap('object-result-summary',{method:target?.name,from});
-    return derive(result,inputs,site);
+    const resultFrom=union(...resultInputs.map(labels));
+    if (isObject(result) && !meta(result) && resultFrom.length) gap('object-result-summary',{method:target?.name,from:resultFrom});
+    return derive(result,resultInputs,site);
   }
 
   function source(value, detail = {}) {
