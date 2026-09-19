@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-19T12:53:31.063Z",
+  "implementationCommit": "130d5469dccc4781e7cd6e2540f0bd626e69aed0",
+  "nodeTests": 45,
+  "browserTests": 6,
+  "demoSnapshot": {
+    "source": "logs/test-1789488685964",
+    "output": "logs/demo-snapshot-1789822233199",
+    "status": "incomplete",
+    "reason": "no-new-supported-sites",
+    "rounds": 5,
+    "allComparedSnapshotsEqual": true,
+    "errors": [],
+    "sinkFields": [
+      "/name",
+      "/tags/0/content",
+      "/tags/1/content",
+      "/personalSignature",
+      "/LastLoginTime",
+      "/experience"
+    ],
+    "gapCounts": {
+      "nullish-propagation": 46,
+      "object-result-summary": 41
+    },
+    "substitutions": [
+      "HMR disabled with a local Vite client stub",
+      "API URL redirected to deterministic local fixture",
+      "avatar served as local SVG"
+    ],
+    "note": "Saved original Vue 3.5.42 / Ant Design Vue 4.2.6 modules and compiled app; not an acceptance run against the currently running developer servers."
+  }
+}

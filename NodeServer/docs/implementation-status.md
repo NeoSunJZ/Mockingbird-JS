@@ -1,3 +1,5 @@
+> 2026-09-19 更新：下文保留初次修复记录。当前 AST 选择和输入门控已再次调整，最新规则、45 项 Node/VM 与 6 项浏览器验证、Demo 快照验收见 [tracing-selection-and-propagation.md](tracing-selection-and-propagation.md)。
+
 # 修复状态与验证边界
 
 日期：2026-09-15（Asia/Shanghai）。实现沿用装箱与迭代重放，不是全量 shadow taint，也没有修改 V8。

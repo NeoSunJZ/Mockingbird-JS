@@ -57,7 +57,7 @@ The CLI exits nonzero for `incomplete` and `failed`. The baseline compares the a
 
 ## Implementation
 
-- `tools/runtime.js`: lazy primitive/object proxies; metadata in WeakMaps; source/value identities; synchronous capture; bounded event reporting.
+- `tools/runtime.js`: lazy primitive/object proxies; metadata in WeakMaps; source/value identities; explicit input gating; bounded event reporting.
 - `tools/network.js`: target fetch/XHR readers, without body envelopes or replacing native Response/XHR constructors.
 - `tools/tools.js`: Babel semantic protection, source-location analysis and iterative expression rewriting.
 - `tools/scripts.js`: script identity, served generations and instrumentation candidates.
@@ -67,7 +67,7 @@ The CLI exits nonzero for `incomplete` and `failed`. The baseline compares the a
 - `tools/command.js`: scenario actions and explicit failures.
 - `ede-killer.js`: baseline, replay, settling, flush and reporting.
 
-The first pass parses each intercepted script and inserts basic semantic adapters for conditions, logical operations, equality, `typeof`, `switch`, and selected native conversions. Propagation captures are still added iteratively at observed locations. Capture evaluates the expression once; it does not reread extracted dependencies. Ordinary identifier/property `++` and `--` now preserve numeric conversion, prefix/postfix values and source metadata.
+The first pass parses each intercepted script and inserts basic semantic adapters for conditions, logical operations, equality, `typeof`, `switch`, and selected native conversions. Propagation captures are still added iteratively at observed locations. The rewriter evaluates each input once and propagates only from those explicit inputs. Nested updates and outer assignments are analyzed separately; derived containers do not distribute their aggregate provenance to unrelated fields. Ordinary identifier/property `++` and `--` now preserve numeric conversion, prefix/postfix values and source metadata.
 
 Use `globalThis.__mockingbird.meta(value)`, `.labels(value)` and `.raw(value)` to inspect tracer metadata. `_f_src` / `_f_from` are no longer injected into business objects. Origins use response occurrence IDs plus JSON Pointer paths; downstream consumers of the old `root[field]` log format need to migrate.
 
@@ -80,4 +80,4 @@ npm run test:browser
 
 The browser tests serve isolated local fixtures. They include native response behavior, redirected ES modules, baseline/iteration checks, DOM sink accuracy, and React 19.1.1 / Vue 3.4.21 production rendering with a click update. No external application is needed for these tests.
 
-See [implementation status](docs/implementation-status.md) and [machine-readable evidence](docs/implementation-evidence.json) for the verified scope. Important remaining boundaries include `null`/`undefined` propagation, suspended expressions, arbitrary native APIs, custom classes/private fields, frozen properties, uninstrumented inline/eval/worker code, and conservative dependency merging. Metadata is not recovered by matching equal string values. Existing framework fixtures preserve rendering and reach DOM sinks, but still report `incomplete` for nullish propagation gaps.
+See [current selection and propagation rules](docs/tracing-selection-and-propagation.md) and [current evidence](docs/input-gating-evidence.json) for the verified scope. The earlier [implementation status](docs/implementation-status.md) records the first repair round. Important remaining boundaries include `null`/`undefined` propagation, suspended expressions, arbitrary native APIs, custom classes/private fields, frozen properties, uninstrumented inline/eval/worker code, and conservative dependency merging. Metadata is not recovered by matching equal string values. Existing framework fixtures preserve rendering and reach DOM sinks, but still report `incomplete` for nullish propagation gaps.
