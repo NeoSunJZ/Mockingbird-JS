@@ -51,3 +51,22 @@ test('multiple observed locations do not double transform a nested update',()=>{
  const code=wrapExpressionsAtPositions(source,new Set(found.candidates),1);
  assert.equal((code.match(/\.step\(/g)||[]).length,1);
 });
+test('destructuring defaults retain field-specific dependencies and laziness',()=>{
+ const s='const data=__mockingbird.source({n:2});let hits=0;const {a=data.n+1,b=(++hits)}={b:0};JSON.stringify([Number(a),b,hits,__mockingbird.labels(a)]);';
+ const prepared=prepareScript(s).code;const ast=parse(prepared);let location;
+ traverse(ast,{AssignmentPattern(p){if(p.node.left.name==='a')location=p.node.right.loc;}});
+ const selected=getExpression(ast,prepared,{lineNumber:location.start.line-1,columnNumber:location.start.column});
+ assert.ok(selected.uses.some(u=>u.role==='default'));
+ const code=wrapExpressionsAtPositions(prepared,new Set(selected.candidates));
+ const context=vm.createContext({});vm.runInContext(`globalThis.__mockingbird=(${createRuntime.toString()})(globalThis,{realmId:'test'});`,context);
+ assert.equal(vm.runInContext(code,context),'[3,0,0,["test/response#1:/n"]]');
+});
+test('deferred async methods do not block an unrelated object property initializer',()=>{
+ const s='const data=__mockingbird.source(2);const view={n:data+1,async load(){await 0;}};JSON.stringify([Number(view.n),__mockingbird.labels(view.n)]);';
+ const result=execute(s);assert.equal(result.value,'[3,["test/response#1:"]]');
+ assert.ok(!result.gaps.some(g=>g.reason==='suspended-expression'));
+});
+test('discarded call outputs do not produce nullish propagation gaps',()=>{
+ const s='function consume(x){}const data=__mockingbird.source(2);consume(data);__mockingbird.events.some(e=>e.kind==="gap"&&e.reason==="nullish-propagation");';
+ assert.equal(execute(s,['CallExpression']).value,false);
+});

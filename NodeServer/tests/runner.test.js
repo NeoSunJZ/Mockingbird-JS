@@ -43,3 +43,8 @@ test('quoted action arguments, inspection commands and invalid waits are handled
   assert.equal(seen[1].value[0].name,'a');
   await assert.rejects(executeCommands(page,['SLEEP nope']),/nonnegative/);
 });
+test('whole XPath arguments retain quotes inside predicates',async()=>{
+ let selector;const page={context:()=>({}),click:async value=>{selector=value;}};
+ await executeCommands(page,["CLICK //button[contains(., 'get login message')]"]);
+ assert.equal(selector,"xpath=//button[contains(., 'get login message')]");
+});

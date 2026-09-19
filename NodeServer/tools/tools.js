@@ -38,10 +38,16 @@ function splitVariableDeclarations(source) { return print(parse(source)); }
 
 function unsafeReason(node) {
   let reason;
-  t.traverseFast(node, child => {
+  function visit(child) {
+    if (!child || t.isFunction(child) || t.isClass(child)) return;
     if (t.isAwaitExpression(child) || t.isYieldExpression(child)) reason = 'suspended-expression';
     if (t.isCallExpression(child) && t.isIdentifier(child.callee, { name: 'eval' })) reason = 'direct-eval';
-  });
+    for (const key of t.VISITOR_KEYS[child.type] || []) {
+      const value=child[key];
+      if (Array.isArray(value)) value.forEach(visit); else visit(value);
+    }
+  }
+  visit(node);
   return reason;
 }
 
@@ -207,6 +213,10 @@ function getExpression(ast, source, location) {
     else if ((p.isReturnStatement() || p.isThrowStatement()) && p.node.argument) add(p, p.isReturnStatement() ? 'return' : 'throw');
     else if (p.isExportDefaultDeclaration() && t.isExpression(p.node.declaration)) add(p, 'export');
     else if ((p.isCallExpression() || p.isOptionalCallExpression() || p.isNewExpression() || p.isTaggedTemplateExpression()) && !isHelper(p.node)) add(p, 'call');
+    if (p.isAssignmentPattern()) {
+      slot(p,'right','default');
+      if(contains(p.node.right,line,column)) add(p.get('right'),'default');
+    }
     if (p.parentPath?.isArrowFunctionExpression() && p.key === 'body' && p.isExpression()) add(p, 'return');
     if (p.isIfStatement() || p.isWhileStatement() || p.isDoWhileStatement() || p.isForStatement() || p.isConditionalExpression()) slot(p, 'test', 'control');
     if (p.isSwitchStatement()) slot(p, 'discriminant', 'control');
@@ -230,11 +240,11 @@ function getExpression(ast, source, location) {
 
 // Only compile observed value destinations. Dependencies are the operands that
 // actually execute, saved before coercion; unrelated reads never enter a frame.
-function instrumentExpression(node, p, onGap) {
+function instrumentExpression(node, p, onGap, valueNeeded = true) {
   const site = t.stringLiteral(`${node.start ?? 'generated'}:${node.end ?? 'generated'}`);
-  const c = n => instrumentExpression(n, p, onGap);
+  const c = (n, needed = true) => instrumentExpression(n, p, onGap, needed);
   const operand = n => isHelper(n, 'raw') ? c(n.arguments[0]) : c(n);
-  const derived = (value, inputs) => call('derive', [value, t.arrayExpression(inputs.map(n=>t.cloneNode(n))), t.cloneNode(site)]);
+  const derived = (value, inputs, needed = valueNeeded) => needed ? call('derive', [value, t.arrayExpression(inputs.map(n=>t.cloneNode(n))), t.cloneNode(site)]) : value;
   const unsupported = reason => {
     onGap({ reason, location: node.loc });
     return node; // Preserve the operation rather than pretend to cover it.
@@ -252,7 +262,7 @@ function instrumentExpression(node, p, onGap) {
       if (!t.isMemberExpression(node.argument) || t.isSuper(node.argument.object) || t.isPrivateName(node.argument.property)) return unsupported('delete-reference');
       return call('remove', [c(node.argument.object),node.argument.computed ? c(node.argument.property) : t.stringLiteral(node.argument.property.name),site]);
     }
-    if (node.operator === 'void') return t.unaryExpression('void', c(node.argument));
+    if (node.operator === 'void') return t.unaryExpression('void', c(node.argument,false));
     if (node.operator === 'typeof' && t.isIdentifier(node.argument) && !p.scope.getBinding(node.argument.name)) return node;
     const value = temp(p);
     return t.sequenceExpression([assign(value,operand(node.argument)),derived(t.unaryExpression(node.operator,call('raw',[t.cloneNode(value)])),[value])]);
@@ -266,7 +276,7 @@ function instrumentExpression(node, p, onGap) {
   if (t.isConditionalExpression(node)) return t.conditionalExpression(call('condition',[c(node.test)]),c(node.consequent),c(node.alternate));
   if (t.isSequenceExpression(node)) {
     // Earlier items have effects but do not contribute their values to the result.
-    return t.sequenceExpression(node.expressions.map(c));
+    return t.sequenceExpression(node.expressions.map((expr,index)=>c(expr,valueNeeded && index===node.expressions.length-1)));
   }
   if (t.isUpdateExpression(node)) {
     try {
@@ -274,7 +284,7 @@ function instrumentExpression(node, p, onGap) {
       const step = temp(p);
       const before = t.memberExpression(t.cloneNode(step),t.identifier('before'));
       const after = t.memberExpression(t.cloneNode(step),t.identifier('after'));
-      return t.sequenceExpression([...prefix.map(c),assign(step,call('step',[t.cloneNode(ref),t.numericLiteral(node.operator==='++'?1:-1)])),
+      return t.sequenceExpression([...prefix.map(n=>c(n)),assign(step,call('step',[t.cloneNode(ref),t.numericLiteral(node.operator==='++'?1:-1)])),
         assign(ref,t.cloneNode(after)),node.prefix ? after : before]);
     } catch { return unsupported('update-reference'); }
   }
@@ -290,12 +300,12 @@ function instrumentExpression(node, p, onGap) {
       if (['&&=','||=','??='].includes(node.operator)) {
         const condition = node.operator==='??=' ? call('nullish',[t.cloneNode(before)]) : call('condition',[t.cloneNode(before)]);
         const write = assign(ref,c(node.right));
-        return t.sequenceExpression([...prefix.map(c),assign(before,t.cloneNode(ref)),t.conditionalExpression(condition,
+        return t.sequenceExpression([...prefix.map(n=>c(n)),assign(before,t.cloneNode(ref)),t.conditionalExpression(condition,
           node.operator==='||=' ? t.cloneNode(before) : write,node.operator==='||=' ? write : t.cloneNode(before))]);
       }
       const right = temp(p);
-      const result = derived(t.binaryExpression(node.operator.slice(0,-1),call('raw',[t.cloneNode(before)]),call('raw',[t.cloneNode(right)])),[before,right]);
-      return t.sequenceExpression([...prefix.map(c),assign(before,t.cloneNode(ref)),assign(right,c(node.right)),assign(ref,result)]);
+      const result = derived(t.binaryExpression(node.operator.slice(0,-1),call('raw',[t.cloneNode(before)]),call('raw',[t.cloneNode(right)])),[before,right],true);
+      return t.sequenceExpression([...prefix.map(n=>c(n)),assign(before,t.cloneNode(ref)),assign(right,c(node.right)),assign(ref,result)]);
     } catch { return unsupported('assignment-reference'); }
   }
   if (t.isOptionalMemberExpression(node) || t.isOptionalCallExpression(node)) return unsupported('optional-chain-propagation');
@@ -307,7 +317,7 @@ function instrumentExpression(node, p, onGap) {
     if (t.isSuper(node.callee) || t.isImport(node.callee) || t.isV8IntrinsicIdentifier(node.callee)) return unsupported('special-call');
     if (t.isIdentifier(node.callee,{name:'eval'}) && !p.scope.getBinding('eval')) return unsupported('direct-eval');
     if (isHelper(node)) {
-      if (isHelper(node,'builtin')) return call('invoke',[c(node.arguments[0]),node.arguments[1],t.arrayExpression(node.arguments[2].elements.map(c)),site]);
+      if (isHelper(node,'builtin')) return call('invoke',[c(node.arguments[0]),node.arguments[1],t.arrayExpression(node.arguments[2].elements.map(n=>c(n))),site,t.unaryExpression('void',t.numericLiteral(0)),t.booleanLiteral(valueNeeded)]);
       // Semantic adapters retain their purpose; compile their operand without
       // interpreting the adapter itself as a business function dependency.
       return t.callExpression(node.callee,node.arguments.map(arg=>t.isExpression(arg)?c(arg):arg));
@@ -321,9 +331,9 @@ function instrumentExpression(node, p, onGap) {
       return t.sequenceExpression([assign(receiver,c(node.callee.object)),
         assign(key,node.callee.computed ? c(node.callee.property) : t.stringLiteral(node.callee.property.name)),
         assign(fn,t.memberExpression(t.cloneNode(receiver),t.cloneNode(key),true)),
-        call('invoke',[t.cloneNode(fn),t.cloneNode(receiver),args,site,t.cloneNode(key)])]);
+        call('invoke',[t.cloneNode(fn),t.cloneNode(receiver),args,site,t.cloneNode(key),t.booleanLiteral(valueNeeded)])]);
     }
-    return call('invoke',[c(node.callee),t.unaryExpression('void',t.numericLiteral(0)),args,site]);
+    return call('invoke',[c(node.callee),t.unaryExpression('void',t.numericLiteral(0)),args,site,t.unaryExpression('void',t.numericLiteral(0)),t.booleanLiteral(valueNeeded)]);
   }
   if (t.isArrayExpression(node)) return call('object',[t.arrayExpression(node.elements.map(el=>el===null?null:t.isSpreadElement(el)?t.spreadElement(c(el.argument)):c(el)))]);
   if (t.isObjectExpression(node)) {
@@ -368,9 +378,14 @@ function wrapExpressionsAtPositions(source, locations, iteration = 0, onGap = ()
     else if(p.isReturnStatement() || p.isThrowStatement())value=p.get('argument');
     else if(p.isExportDefaultDeclaration())value=p.get('declaration');
     if(!value.node || !value.isExpression() || value.isFunction() || value.isClass() || isHelper(value.node,'result')) return;
+    let parameter=false;
+    for(let ancestor=value;ancestor && !ancestor.isFunction();ancestor=ancestor.parentPath) {
+      if(ancestor.listKey==='params')parameter=true;
+    }
+    if(parameter){onGap({reason:'parameter-initializer',location:p.node.loc});return;}
     const reason=unsafeReason(value.node);
     if(reason){onGap({reason,location:p.node.loc});return;}
-    const transformed=instrumentExpression(value.node,p,onGap);
+    const transformed=instrumentExpression(value.node,p,onGap,!p.parentPath.isExpressionStatement());
     value.replaceWith(call('result',[transformed,t.stringLiteral(key),t.numericLiteral(iteration)]));
     p.skip();
   }});

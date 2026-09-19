@@ -53,7 +53,7 @@ async function executeCommands(page, commands, options = {}) {
         }
 
         case "WAIT_LOCATE": {
-          const xpath = parts.slice(1).join(" ");
+          const xpath = parts.length === 2 ? parts[1] : rest;
           //   console.log(`> WAIT_LOCATE ${xpath}`);
           await page.waitForSelector(`xpath=${xpath}`);
           break;
@@ -84,25 +84,25 @@ async function executeCommands(page, commands, options = {}) {
           break;
         }
         case "CLICK": {
-          const xpath = parts.slice(1).join(" ");
+          const xpath = parts.length === 2 ? parts[1] : rest;
           //   console.log(`> CLICK ${xpath}`);
           await page.click(`xpath=${xpath}`);
           break;
         }
         case "DOUBLE_CLICK": {
-          const xpath = parts.slice(1).join(" ");
+          const xpath = parts.length === 2 ? parts[1] : rest;
           //   console.log(`> DOUBLE_CLICK ${xpath}`);
           await page.dblclick(`xpath=${xpath}`);
           break;
         }
         case "RIGHT_CLICK": {
-          const xpath = parts.slice(1).join(" ");
+          const xpath = parts.length === 2 ? parts[1] : rest;
           //   console.log(`> RIGHT_CLICK ${xpath}`);
           await page.click(`xpath=${xpath}`, { button: "right" });
           break;
         }
         case "HOVER": {
-          const xpath = parts.slice(1).join(" ");
+          const xpath = parts.length === 2 ? parts[1] : rest;
           //   console.log(`> HOVER ${xpath}`);
           await page.hover(`xpath=${xpath}`);
           break;

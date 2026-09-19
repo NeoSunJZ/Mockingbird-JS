@@ -190,7 +190,7 @@ function createTraceRuntime(host, options = {}) {
     return derive(value, fields, 'object-fields');
   }
 
-  function invoke(fn, receiver, args, site, selector) {
+  function invoke(fn, receiver, args, site, selector, valueNeeded = true) {
     const target = meta(fn)?.raw ?? fn;
     const data = meta(receiver);
     const inputs = [fn, receiver, selector, ...args];
@@ -218,6 +218,7 @@ function createTraceRuntime(host, options = {}) {
       }
     }
     const result=Reflect.apply(target,actualReceiver,forwarded);
+    if (!valueNeeded) return result;
     if (data && result===data.raw) return receiver;
     const iterators=[Array.prototype.values,Array.prototype.keys,Array.prototype.entries,
       Map.prototype.values,Map.prototype.keys,Map.prototype.entries,Set.prototype.values,Set.prototype.keys,Set.prototype.entries,String.prototype[Symbol.iterator]];
