@@ -31,7 +31,7 @@ class ScriptStore {
     return { source, virtualURL, id };
   }
   observe(event) {
-    if (!event.stack || !event.from?.length || ['sink','control'].includes(event.kind)) return;
+    if (!event.stack || !event.from?.length || event.kind === 'sink') return;
     const frames = parseStack(event.stack);
     // A proxy may fire in framework code or native glue. Search bounded frames,
     // never assume the second frame is an HTTP .js file.
@@ -45,7 +45,8 @@ class ScriptStore {
     const result = getExpression(served.ast,served.source,{lineNumber:frame.line-1,columnNumber:frame.column-1});
     this.report({kind:'analysis',fileURL:served.record.url,scriptId:served.record.id,generation:served.record.generation,
       line:frame.line,column:frame.column,from:event.from,
-      expression:result.expression?.code,statement:result.statement?.code,isController:result.statement?.isController});
+      expression:result.expression?.code,statement:result.statement?.code,isController:result.statement?.isController,
+      expressions:result.expressions.map(({node,...item})=>item),statements:result.statements.map(({node,...item})=>item),uses:result.uses});
     for (const loc of result.candidates) served.record.candidates.set(`${loc.start.index}:${loc.end.index}`,loc);
 
   }

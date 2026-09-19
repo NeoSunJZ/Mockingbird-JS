@@ -48,7 +48,7 @@ test('capture propagates operators, concise arrows and direct call arguments', (
   assert.equal(run(wrapExpressionsAtPositions(s,new Set(found.candidates)),false),'["test/response#1:"]');
   const direct = 'consume(data.n+1);';
   const result = getExpression(parse(direct),direct,{lineNumber:0,columnNumber:10});
-  assert.equal(result.expression.type,'BinaryExpression');
+  assert.equal(result.expression.type,'CallExpression');
 });
 test('destructuring is recognized and unsupported suspended expressions are reported', () => {
   const s='const {x,y}=data;';

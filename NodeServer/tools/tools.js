@@ -168,38 +168,64 @@ function describe(node, source) {
     left: t.isVariableDeclarator(node) ? print(node.id) : t.isAssignmentExpression(node) ? print(node.left) : null,
     node };
 }
-// Locations here follow CDP: zero-based line and column. End offsets are exclusive.
+// Locations follow CDP: zero-based line/column, exclusive end offsets.
+// Collect value destinations and context independently: c++ and a's initializer
+// both matter in `let a = b + c++`; an enclosing block is not a condition use.
 function getExpression(ast, source, location) {
+  const line = location.lineNumber + 1, column = location.columnNumber;
   let leaf;
   traverse(ast, { enter(p) {
-    if (contains(p.node, location.lineNumber + 1, location.columnNumber)) leaf = p;
+    if (contains(p.node, line, column)) leaf = p;
     else p.skip();
   } });
-  if (!leaf) return { expression: null, statement: null, update: null, candidates: [] };
-  if (leaf.findParent(p => isHelper(p.node, 'capture') || isHelper(p.node, 'step'))) return { expression: null, statement: null, update: null, candidates: [] };
-  let expression, statement, update;
-  const candidates = [];
+  const expressions = [], statements = [], uses = [], candidates = [];
+  let update = null, handled = false;
+  const add = (p, role) => {
+    const item = { ...describe(p.node, source), role };
+    if (!expressions.some(item => item.node === p.node)) expressions.push(item);
+    uses.push({ role, type: p.node.type, position: p.node.loc });
+    if (!handled && !candidates.some(loc => locationKey(loc) === locationKey(p.node.loc))) candidates.push(p.node.loc);
+  };
+  const slot = (p, key, role) => {
+    const node = p.node[key];
+    if (node && contains(node, line, column)) uses.push({role, type:p.node.type, position:node.loc});
+  };
+  // A result marker covers one evaluated expression, not nested callback bodies.
   for (let p = leaf; p && !p.isProgram(); p = p.parentPath) {
-    if (p.isUpdateExpression()) { update = p.node; expression = p.node; candidates.push(p.node.loc); break; }
-    if (!statement && p.isStatement()) statement = p.node;
-    if (isHelper(p.node, 'capture')) break; // This boundary has already been handled.
-    if (p.isVariableDeclarator() && p.node.init || p.isAssignmentExpression() || p.isReturnStatement() && p.node.argument) {
-      expression = p.node;
-      candidates.push(p.node.loc);
+    if (p.isFunction()) {
+      if (isHelper(p.parentPath?.node, 'capture')) handled = true;
       break;
     }
-    // Direct computed call arguments and concise arrow returns were missing.
-    if (p.parentPath?.isCallExpression() && p.listKey === 'arguments' && p.isExpression() && !p.isIdentifier() && !p.isMemberExpression() && !isHelper(p.parentPath.node)) {
-      expression = p.node; candidates.push(p.node.loc); break;
-    }
-    if (p.parentPath?.isArrowFunctionExpression() && p.key === 'body' && p.isExpression()) {
-      expression = p.node; candidates.push(p.node.loc); break;
-    }
-    if (p.isFunction()) break;
+    if (isHelper(p.node, 'result') || isHelper(p.node, 'capture') || isHelper(p.node, 'step')) { handled = true; break; }
   }
-  const result = describe(statement, source);
-  if (result) result.isController = Boolean(statement.test && contains(statement.test, location.lineNumber + 1, location.columnNumber));
-  return { expression: describe(expression, source), statement: result, update: describe(update, source), candidates };
+  for (let p = leaf; p && !p.isProgram(); p = p.parentPath) {
+    if (p.isFunction()) break;
+    if (p.isStatement()) statements.push(describe(p.node, source));
+    if (p.isUpdateExpression()) { update = describe(p.node, source); add(p, 'update'); }
+    else if (p.isAssignmentExpression()) add(p, 'write');
+    else if (p.isVariableDeclarator() && p.node.init && contains(p.node.init, line, column)) add(p, 'binding');
+    else if ((p.isReturnStatement() || p.isThrowStatement()) && p.node.argument) add(p, p.isReturnStatement() ? 'return' : 'throw');
+    else if (p.isExportDefaultDeclaration() && t.isExpression(p.node.declaration)) add(p, 'export');
+    else if ((p.isCallExpression() || p.isOptionalCallExpression() || p.isNewExpression() || p.isTaggedTemplateExpression()) && !isHelper(p.node)) add(p, 'call');
+    if (p.parentPath?.isArrowFunctionExpression() && p.key === 'body' && p.isExpression()) add(p, 'return');
+    if (p.isIfStatement() || p.isWhileStatement() || p.isDoWhileStatement() || p.isForStatement() || p.isConditionalExpression()) slot(p, 'test', 'control');
+    if (p.isSwitchStatement()) slot(p, 'discriminant', 'control');
+    if (p.isSwitchCase()) slot(p, 'test', 'control');
+    if (p.isForStatement()) { slot(p, 'init', 'loop-init'); slot(p, 'update', 'loop-update'); }
+    if (p.isForInStatement() || p.isForOfStatement()) slot(p, 'right', p.isForInStatement() ? 'keys' : 'iteration');
+    if (p.isLogicalExpression()) slot(p, 'left', 'control');
+    if (p.isWithStatement()) slot(p, 'object', 'dynamic-scope');
+    if (p.isMemberExpression() || p.isOptionalMemberExpression()) {
+      slot(p, 'object', 'member-base');
+      if (p.node.computed) slot(p, 'property', 'member-key');
+    }
+    if (p.isAwaitExpression() || p.isYieldExpression()) slot(p, 'argument', 'suspend');
+  }
+  const statement = statements.find(item => item.type !== 'BlockStatement') || statements[0] || null;
+  for (const item of statements) item.isController = uses.some(use => use.role === 'control' &&
+    (item.node.test === undefined ? item.type === 'SwitchStatement' && (contains(item.node.discriminant, line, column) || item.node.cases.some(c => c.test && contains(c.test, line, column))) : contains(item.node.test, line, column)) &&
+    ['IfStatement','WhileStatement','DoWhileStatement','ForStatement','SwitchStatement'].includes(item.type));
+  return { expression: expressions[0] || null, statement, update, expressions, statements, uses, candidates, handled };
 }
 
 function wrapExpressionsAtPositions(source, locations, iteration = 0, onGap = () => {}) {
@@ -214,7 +240,8 @@ function wrapExpressionsAtPositions(source, locations, iteration = 0, onGap = ()
       found.add(key);
       let valuePath = p;
       if (p.isVariableDeclarator()) valuePath = p.get('init');
-      else if (p.isReturnStatement()) valuePath = p.get('argument');
+      else if (p.isReturnStatement() || p.isThrowStatement()) valuePath = p.get('argument');
+      else if (p.isExportDefaultDeclaration()) valuePath = p.get('declaration');
       else if (p.isAssignmentExpression() && p.node.operator === '=') valuePath = p.get('right');
       if (!valuePath.node || isHelper(valuePath.node, 'capture')) return;
       const reason = unsafeReason(valuePath.node);
