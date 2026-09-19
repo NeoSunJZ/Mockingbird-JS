@@ -3,9 +3,18 @@ function createTraceRuntime(host, options = {}) {
   const metadata = new WeakMap();
   const objectProxies = new WeakMap();
   const functionProxies = new WeakMap();
-  const contexts = [];
   const conversions = new Set([Boolean, Number, String, BigInt]);
   const objectIs = Object.is;
+  const nativeMethods = new Set();
+  for (const ctor of [Number, String, Boolean, BigInt, Symbol, Date, RegExp, Map, Set, WeakMap, WeakSet, Promise, DataView,
+    Object.getPrototypeOf(Uint8Array)]) {
+    for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(ctor.prototype))) {
+      if (typeof descriptor.value === 'function') nativeMethods.add(descriptor.value);
+    }
+  }
+  const arrayMethods = new Set(Object.values(Object.getOwnPropertyDescriptors(Array.prototype)).map(d=>d.value).filter(v=>typeof v==='function'));
+  const isInternal = v => v instanceof Date || v instanceof RegExp || v instanceof Map || v instanceof Set ||
+    v instanceof WeakMap || v instanceof WeakSet || ArrayBuffer.isView(v);
   const pending = new Set();
   const events = [];
   const failures = [];
@@ -43,10 +52,6 @@ function createTraceRuntime(host, options = {}) {
   }
   function observe(kind, sources, detail = {}) {
     if (!sources.length) return;
-    for (const context of contexts) {
-      for (const source of sources) context.sources.add(source);
-      if (detail.valueId) context.parents.add(detail.valueId);
-    }
     return emit(kind, { from: sources, stack: new Error().stack, ...detail });
   }
   function raw(value) {
@@ -77,6 +82,12 @@ function createTraceRuntime(host, options = {}) {
       metadata.set(value, { raw: value, sources, ...lineage, primitive: false, hostObject: true });
       return value;
     }
+    if (!primitive && !Array.isArray(value) && !isInternal(value) &&
+      ![Object.prototype, null].includes(Reflect.getPrototypeOf(value))) {
+      metadata.set(value, { raw:value, sources, ...lineage, primitive:false, opaque:true });
+      gap('opaque-result', { from:sources, valueId });
+      return value;
+    }
     if (!primitive && objectProxies.has(value)) {
       const proxy = objectProxies.get(value);
       const data = meta(proxy);
@@ -91,17 +102,17 @@ function createTraceRuntime(host, options = {}) {
         if (primitive && key === '__v_skip') return true; // Vue 3 must not proxy our primitive wrappers again.
         if (primitive && (key === 'toJSON' || key === Symbol.toPrimitive)) return () => raw(receiver);
         // Native primitive accessors need internal slots on the real wrapper.
-        const internal = value instanceof Map || value instanceof Set || value instanceof Date || value instanceof RegExp || ArrayBuffer.isView(value);
+        const internal = isInternal(value);
         const result = Reflect.get(target, key, primitive || internal ? target : receiver);
         if (result === undefined && !Reflect.getOwnPropertyDescriptor(target, key)) return result;
         let field = data.fields.get(key);
         if (!field || !Object.is(field.value, result)) {
           const from = meta(result)?.sources || (data.sourceRoot && typeof key !== 'symbol' && typeof result !== 'function' && !(Array.isArray(target) && key === 'length')
-            ? [`${data.sourceRoot}:${data.path || ''}/${pointer(key)}`] : data.sources);
+            ? [`${data.sourceRoot}:${data.path || ''}/${pointer(key)}`] : primitive || internal ? data.sources : []);
           field = { value: result, sources: from };
           data.fields.set(key, field);
         }
-        observe('get', field.sources, { prop: String(key), logIndex: round, valueId: data.valueId });
+        observe('get', typeof result === 'function' ? data.sources : field.sources, { prop: String(key), logIndex: round, valueId: data.valueId });
         const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
         if (descriptor && !descriptor.configurable && 'value' in descriptor && !descriptor.writable) {
           if (!isObject(result) || !meta(result)) gap('fixed-property', { prop: String(key), from: field.sources });
@@ -151,42 +162,74 @@ function createTraceRuntime(host, options = {}) {
   }
 
   function callable(fn) {
+    // User functions keep exact identity and dynamic this. Their bodies are
+    // discovered by proxy reads and instrumented in later rounds.
+    if (!nativeMethods.has(fn) && !arrayMethods.has(fn)) return fn;
     if (functionProxies.has(fn)) return functionProxies.get(fn);
-    const proxy = new Proxy(fn, {
-      apply(target, receiver, args) {
-        const data = meta(receiver);
-        const from = union(labels(receiver), ...args.map(labels));
-        observe('call', from, { method: target.name, valueId: data?.valueId });
-        // Preserve dynamic this (including .call/.apply and detached methods).
-        // Only known internal-slot builtins use raw receivers.
-        const internal = data && (data.primitive || data.raw instanceof Date ||
-          data.raw instanceof Map || data.raw instanceof Set || data.raw instanceof RegExp ||
-          ArrayBuffer.isView(data.raw));
-        const arraySearch = data && Array.isArray(data.raw) &&
-          [Array.prototype.includes, Array.prototype.indexOf, Array.prototype.lastIndexOf].includes(target);
-        let forwarded = internal || arraySearch ? args.map(value => meta(value)?.raw ?? value) : args;
-        const predicates = [Array.prototype.filter, Array.prototype.find, Array.prototype.findIndex,
-          Array.prototype.findLast, Array.prototype.findLastIndex, Array.prototype.some, Array.prototype.every, Array.prototype.sort];
-        if (data && Array.isArray(data.raw) && predicates.includes(target) && typeof args[0] === 'function') {
-          forwarded = [...args];
-          forwarded[0] = function (...values) { return raw(Reflect.apply(args[0], this, values)); };
-        }
-        const result = Reflect.apply(target, internal || arraySearch ? data.raw : receiver, forwarded);
-        // Iterators and promises have internal slots; their individual yielded
-        // values are observed through the proxied array, not a proxy of next().
-        if (result instanceof Promise || [Array.prototype.values, Array.prototype.keys, Array.prototype.entries,
-          Map.prototype.values, Map.prototype.keys, Map.prototype.entries,
-          Set.prototype.values, Set.prototype.keys, Set.prototype.entries].includes(target)) {
-          if (internal) gap('native-carrier', { method: target.name, from });
-          return result;
-        }
-        if (internal && isObject(result)) gap('native-result-summary', { method: target.name, from });
-        return wrap(result, from, { parents: [data?.valueId, ...args.map(arg => meta(arg)?.valueId)].filter(Boolean) });
-      }
-    });
-    metadata.set(proxy, { raw: fn, sources: [], primitive: false });
+    const proxy = new Proxy(fn, { apply(target, receiver, args) {
+      return invoke(target, receiver, args, 'native-summary');
+    } });
+    metadata.set(proxy, { raw:fn, sources:[], primitive:false });
     functionProxies.set(fn, proxy);
     return proxy;
+  }
+
+  function derive(value, inputs = [], site) {
+    const from = union(...inputs.map(labels));
+    const parents = inputs.map(input=>meta(input)?.valueId).filter(Boolean);
+    const result = wrap(value, from, { parents });
+    if (from.length) emit('derive', { site, from, valueId:meta(result)?.valueId,
+      parents:parents.filter(id=>id!==meta(result)?.valueId) });
+    return result;
+  }
+
+  function object(value) {
+    // Inspect descriptors, never reread accessors. The literal's actual values
+    // were already evaluated once, individually, by the AST rewriter.
+    const fields = Object.values(Object.getOwnPropertyDescriptors(value)).filter(d=>'value' in d).map(d=>d.value);
+    return derive(value, fields, 'object-fields');
+  }
+
+  function invoke(fn, receiver, args, site, selector) {
+    const target = meta(fn)?.raw ?? fn;
+    const data = meta(receiver);
+    const inputs = [fn, receiver, selector, ...args];
+    const from = union(...inputs.map(labels));
+    observe('call', from, { method:target?.name, valueId:data?.valueId });
+    const intrinsic = nativeMethods.has(target);
+    const actualReceiver = intrinsic && data ? data.raw : receiver;
+    let forwarded = args;
+    if (conversions.has(target) || target === objectIs) forwarded = args.map(raw);
+    else if (intrinsic) {
+      // Keep object key identity for Map/WeakMap/Set/WeakSet. Only tracer
+      // primitive wrappers must become primitives at the native interface.
+      forwarded = args.map((arg,index)=>[Map.prototype.set,WeakMap.prototype.set].includes(target) && index===1 ? arg : meta(arg)?.primitive ? raw(arg) : arg);
+    }
+    if (data && Array.isArray(data.raw)) {
+      if ([Array.prototype.includes,Array.prototype.indexOf,Array.prototype.lastIndexOf].includes(target)) {
+        forwarded=args.map(raw);
+        const result=Reflect.apply(target,data.raw,forwarded);
+        return derive(result,inputs,site);
+      }
+      const predicates=[Array.prototype.filter,Array.prototype.find,Array.prototype.findIndex,
+        Array.prototype.findLast,Array.prototype.findLastIndex,Array.prototype.some,Array.prototype.every,Array.prototype.sort];
+      if(predicates.includes(target) && typeof args[0]==='function') {
+        forwarded=[...args];forwarded[0]=function(...values){return raw(Reflect.apply(args[0],this,values));};
+      }
+    }
+    const result=Reflect.apply(target,actualReceiver,forwarded);
+    if (data && result===data.raw) return receiver;
+    const iterators=[Array.prototype.values,Array.prototype.keys,Array.prototype.entries,
+      Map.prototype.values,Map.prototype.keys,Map.prototype.entries,Set.prototype.values,Set.prototype.keys,Set.prototype.entries,String.prototype[Symbol.iterator]];
+    if(iterators.includes(target)) {
+      if(intrinsic && from.length)gap('native-carrier',{method:target.name,from});
+      return result;
+    }
+    if ([Map.prototype.get,WeakMap.prototype.get].includes(target)) return derive(result,[result,args[0]],site);
+    if ([Map.prototype.set,WeakMap.prototype.set,Set.prototype.add,WeakSet.prototype.add].includes(target)) return result;
+    if (Array.isArray(result) && arrayMethods.has(target)) return object(result);
+    if (isObject(result) && !meta(result) && from.length) gap('object-result-summary',{method:target?.name,from});
+    return derive(result,inputs,site);
   }
 
   function source(value, detail = {}) {
@@ -194,24 +237,31 @@ function createTraceRuntime(host, options = {}) {
     emit('source', { sourceId: id, ...detail });
     return wrap(value, [`${id}:`], { sourceRoot: id, path: '', parents: [id] });
   }
-  function capture(thunk, site, iteration = round) {
-    const context = { sources: new Set(), parents: new Set(), site };
-    contexts.push(context);
-    try {
-      const result = thunk();
-      const from = union([...context.sources], labels(result));
-      const wrapped = wrap(result, from, { parents: [...context.parents] });
-      if (from.length) emit('derive', { site, from, logIndex: iteration, valueId: meta(wrapped)?.valueId,
-        parents: [...context.parents].filter(id => id !== meta(wrapped)?.valueId) });
-      return wrapped;
-    } finally { contexts.pop(); }
+  // Compatibility only: callers must pass explicit inputs. Reads that happen
+  // elsewhere during thunk execution cannot taint its unrelated return value.
+  function capture(thunk, site, iteration = round, ...inputs) {
+    return derive(thunk(), inputs, site);
   }
   const runtime = {
-    source, raw, capture, meta, labels, gap, emit,
+    source, raw, capture, meta, labels, gap, emit, derive, object, invoke,
+    result(value, site, iteration = round) {
+      if(labels(value).length)emit('result',{site,logIndex:iteration,from:labels(value),valueId:meta(value)?.valueId});
+      return value;
+    },
+    member(receiver, key, site) {
+      const value=receiver[key];
+      return derive(value,meta(receiver)?.primitive ? [receiver,key,value] : [key,value],site);
+    },
+    remove(receiver, key, site) {
+      return derive(delete receiver[key],[receiver,key],site);
+    },
+    construct(fn,args,site) { return derive(Reflect.construct(meta(fn)?.raw ?? fn,args),args,site); },
+    nullish(value) { observe('control',labels(value),{valueId:meta(value)?.valueId});return raw(value)==null; },
     builtin(fn, receiver, args) {
       return Reflect.apply(fn, receiver, conversions.has(fn) || fn === objectIs ? args.map(raw) : args);
     },
     key(value) { return Reflect.ownKeys({ [raw(value)]: 0 })[0]; },
+    controlValue(value) { observe('control',labels(value),{valueId:meta(value)?.valueId});return raw(value); },
     condition(value) { observe('control', labels(value), { valueId: meta(value)?.valueId }); return !!raw(value); },
     sink(kind, value, detail = {}) {
       observe('sink', labels(value), { sink: kind, valueId: meta(value)?.valueId, ...detail });

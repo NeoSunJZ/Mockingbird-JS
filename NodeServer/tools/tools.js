@@ -112,8 +112,8 @@ function prepareScript(source) {
         }
       }
     },
-    SwitchStatement: { exit(p) { p.node.discriminant = call('raw', [p.node.discriminant]); } },
-    SwitchCase: { exit(p) { if (p.node.test) p.node.test = call('raw', [p.node.test]); } },
+    SwitchStatement: { exit(p) { p.node.discriminant = call('controlValue', [p.node.discriminant]); } },
+    SwitchCase: { exit(p) { if (p.node.test) p.node.test = call('controlValue', [p.node.test]); } },
     LogicalExpression: {
       exit(p) {
         const n = p.node;
@@ -228,54 +228,153 @@ function getExpression(ast, source, location) {
   return { expression: expressions[0] || null, statement, update, expressions, statements, uses, candidates, handled };
 }
 
+// Only compile observed value destinations. Dependencies are the operands that
+// actually execute, saved before coercion; unrelated reads never enter a frame.
+function instrumentExpression(node, p, onGap) {
+  const site = t.stringLiteral(`${node.start ?? 'generated'}:${node.end ?? 'generated'}`);
+  const c = n => instrumentExpression(n, p, onGap);
+  const operand = n => isHelper(n, 'raw') ? c(n.arguments[0]) : c(n);
+  const derived = (value, inputs) => call('derive', [value, t.arrayExpression(inputs.map(n=>t.cloneNode(n))), t.cloneNode(site)]);
+  const unsupported = reason => {
+    onGap({ reason, location: node.loc });
+    return node; // Preserve the operation rather than pretend to cover it.
+  };
+  if (isHelper(node, 'result') || isHelper(node, 'step')) return node;
+  if (t.isFunction(node) || t.isClass(node)) return node; // Bodies execute later.
+  if (t.isBinaryExpression(node)) {
+    const left = temp(p), right = temp(p);
+    const op = t.binaryExpression(node.operator,
+      call('raw', [t.cloneNode(left)]), node.operator === 'in' ? t.cloneNode(right) : call('raw',[t.cloneNode(right)]));
+    return t.sequenceExpression([assign(left,operand(node.left)),assign(right,operand(node.right)),derived(op,[left,right])]);
+  }
+  if (t.isUnaryExpression(node)) {
+    if (node.operator === 'delete') {
+      if (!t.isMemberExpression(node.argument) || t.isSuper(node.argument.object) || t.isPrivateName(node.argument.property)) return unsupported('delete-reference');
+      return call('remove', [c(node.argument.object),node.argument.computed ? c(node.argument.property) : t.stringLiteral(node.argument.property.name),site]);
+    }
+    if (node.operator === 'void') return t.unaryExpression('void', c(node.argument));
+    if (node.operator === 'typeof' && t.isIdentifier(node.argument) && !p.scope.getBinding(node.argument.name)) return node;
+    const value = temp(p);
+    return t.sequenceExpression([assign(value,operand(node.argument)),derived(t.unaryExpression(node.operator,call('raw',[t.cloneNode(value)])),[value])]);
+  }
+  if (t.isLogicalExpression(node)) {
+    const value = temp(p);
+    const condition = node.operator === '??' ? call('nullish',[t.cloneNode(value)]) : call('condition',[t.cloneNode(value)]);
+    return t.sequenceExpression([assign(value,c(node.left)),t.conditionalExpression(condition,
+      node.operator === '||' ? t.cloneNode(value) : c(node.right),node.operator === '||' ? c(node.right) : t.cloneNode(value))]);
+  }
+  if (t.isConditionalExpression(node)) return t.conditionalExpression(call('condition',[c(node.test)]),c(node.consequent),c(node.alternate));
+  if (t.isSequenceExpression(node)) {
+    // Earlier items have effects but do not contribute their values to the result.
+    return t.sequenceExpression(node.expressions.map(c));
+  }
+  if (t.isUpdateExpression(node)) {
+    try {
+      const {prefix,ref} = reference(p,node.argument);
+      const step = temp(p);
+      const before = t.memberExpression(t.cloneNode(step),t.identifier('before'));
+      const after = t.memberExpression(t.cloneNode(step),t.identifier('after'));
+      return t.sequenceExpression([...prefix.map(c),assign(step,call('step',[t.cloneNode(ref),t.numericLiteral(node.operator==='++'?1:-1)])),
+        assign(ref,t.cloneNode(after)),node.prefix ? after : before]);
+    } catch { return unsupported('update-reference'); }
+  }
+  if (t.isAssignmentExpression(node)) {
+    if (node.operator === '=') {
+      if (t.isPattern(node.left)) return t.assignmentExpression('=',node.left,c(node.right));
+      // Native assignment evaluates the reference before RHS, and invokes its setter once.
+      return t.assignmentExpression('=',node.left,c(node.right));
+    }
+    try {
+      const {prefix,ref} = reference(p,node.left);
+      const before = temp(p);
+      if (['&&=','||=','??='].includes(node.operator)) {
+        const condition = node.operator==='??=' ? call('nullish',[t.cloneNode(before)]) : call('condition',[t.cloneNode(before)]);
+        const write = assign(ref,c(node.right));
+        return t.sequenceExpression([...prefix.map(c),assign(before,t.cloneNode(ref)),t.conditionalExpression(condition,
+          node.operator==='||=' ? t.cloneNode(before) : write,node.operator==='||=' ? write : t.cloneNode(before))]);
+      }
+      const right = temp(p);
+      const result = derived(t.binaryExpression(node.operator.slice(0,-1),call('raw',[t.cloneNode(before)]),call('raw',[t.cloneNode(right)])),[before,right]);
+      return t.sequenceExpression([...prefix.map(c),assign(before,t.cloneNode(ref)),assign(right,c(node.right)),assign(ref,result)]);
+    } catch { return unsupported('assignment-reference'); }
+  }
+  if (t.isOptionalMemberExpression(node) || t.isOptionalCallExpression(node)) return unsupported('optional-chain-propagation');
+  if (t.isMemberExpression(node)) {
+    if (t.isSuper(node.object) || t.isPrivateName(node.property)) return unsupported('special-member-reference');
+    return call('member',[c(node.object),node.computed ? c(node.property) : t.stringLiteral(node.property.name),site]);
+  }
+  if (t.isCallExpression(node) || t.isNewExpression(node)) {
+    if (t.isSuper(node.callee) || t.isImport(node.callee) || t.isV8IntrinsicIdentifier(node.callee)) return unsupported('special-call');
+    if (t.isIdentifier(node.callee,{name:'eval'}) && !p.scope.getBinding('eval')) return unsupported('direct-eval');
+    if (isHelper(node)) {
+      if (isHelper(node,'builtin')) return call('invoke',[c(node.arguments[0]),node.arguments[1],t.arrayExpression(node.arguments[2].elements.map(c)),site]);
+      // Semantic adapters retain their purpose; compile their operand without
+      // interpreting the adapter itself as a business function dependency.
+      return t.callExpression(node.callee,node.arguments.map(arg=>t.isExpression(arg)?c(arg):arg));
+    }
+    if (node.arguments.some(a=>t.isArgumentPlaceholder(a))) return unsupported('partial-application');
+    const args = t.arrayExpression(node.arguments.map(arg=>t.isSpreadElement(arg)?t.spreadElement(c(arg.argument)):c(arg)));
+    if (t.isNewExpression(node)) return call('construct',[c(node.callee),args,site]);
+    if (t.isMemberExpression(node.callee)) {
+      if (t.isSuper(node.callee.object) || t.isPrivateName(node.callee.property)) return unsupported('special-call-reference');
+      const receiver=temp(p), key=temp(p), fn=temp(p);
+      return t.sequenceExpression([assign(receiver,c(node.callee.object)),
+        assign(key,node.callee.computed ? c(node.callee.property) : t.stringLiteral(node.callee.property.name)),
+        assign(fn,t.memberExpression(t.cloneNode(receiver),t.cloneNode(key),true)),
+        call('invoke',[t.cloneNode(fn),t.cloneNode(receiver),args,site,t.cloneNode(key)])]);
+    }
+    return call('invoke',[c(node.callee),t.unaryExpression('void',t.numericLiteral(0)),args,site]);
+  }
+  if (t.isArrayExpression(node)) return call('object',[t.arrayExpression(node.elements.map(el=>el===null?null:t.isSpreadElement(el)?t.spreadElement(c(el.argument)):c(el)))]);
+  if (t.isObjectExpression(node)) {
+    const properties=node.properties.map(prop=>{
+      if (t.isSpreadElement(prop)) return t.spreadElement(c(prop.argument));
+      if (t.isObjectMethod(prop)) {
+        const copy=t.cloneNode(prop,true);if(copy.computed)copy.key=c(copy.key);return copy;
+      }
+      const copy=t.cloneNode(prop,true);
+      copy.value=c(prop.value);
+      if(copy.computed)copy.key=c(prop.key);
+      if(!t.isIdentifier(copy.value) || !t.isIdentifier(copy.key) || copy.key.name!==copy.value.name)copy.shorthand=false;
+      return copy;
+    });
+    return call('object',[t.objectExpression(properties)]);
+  }
+  if (t.isTemplateLiteral(node)) {
+    // Conversions occur between substitutions, not after evaluating all of them.
+    const inputs=[];
+    const expressions=node.expressions.map(expr=>{
+      const value=temp(p);inputs.push(value);return assign(value,c(expr));
+    });
+    return derived(t.templateLiteral(node.quasis,expressions),inputs);
+  }
+  if (t.isAwaitExpression(node)) return unsupported('suspended-expression');
+  if (t.isYieldExpression(node)) return unsupported('generator-propagation');
+  if (t.isTaggedTemplateExpression(node)) return unsupported('tagged-template-propagation');
+  if (t.isParenthesizedExpression(node)) return t.parenthesizedExpression(c(node.expression));
+  if (t.isJSXElement(node) || t.isJSXFragment(node)) return unsupported('jsx-source');
+  return node;
+}
+
 function wrapExpressionsAtPositions(source, locations, iteration = 0, onGap = () => {}) {
   if (!(locations instanceof Set)) throw new TypeError('wrapLocations must be a Set');
   const wanted = new Set([...locations].map(locationKey));
-  const ast = parse(source);
-  const found = new Set();
-  traverse(ast, {
-    exit(p) {
-      if (!p.node.loc || !wanted.has(locationKey(p.node.loc))) return;
-      const key = locationKey(p.node.loc);
-      found.add(key);
-      let valuePath = p;
-      if (p.isVariableDeclarator()) valuePath = p.get('init');
-      else if (p.isReturnStatement() || p.isThrowStatement()) valuePath = p.get('argument');
-      else if (p.isExportDefaultDeclaration()) valuePath = p.get('declaration');
-      else if (p.isAssignmentExpression() && p.node.operator === '=') valuePath = p.get('right');
-      if (!valuePath.node || isHelper(valuePath.node, 'capture')) return;
-      const reason = unsafeReason(valuePath.node);
-      if (reason) { onGap({ reason, location: p.node.loc }); return; }
-      const site = `${p.node.start}:${p.node.end}`;
-      const captured = expr => call('capture', [t.arrowFunctionExpression([], expr), t.stringLiteral(site), t.numericLiteral(iteration)]);
-      if (p.isAssignmentExpression() && p.node.operator !== '=') {
-        const n = p.node;
-        if (['&&=', '||=', '??='].includes(n.operator)) {
-          onGap({ reason: 'logical-assignment-needs-prepass', location: n.loc }); return;
-        }
-        try {
-          const { prefix, ref } = reference(p, n.left);
-          const write = assign(ref, captured(t.binaryExpression(n.operator.slice(0, -1), t.cloneNode(ref), n.right)));
-          p.replaceWith(prefix.length ? t.sequenceExpression([...prefix, write]) : write);
-        } catch (error) { onGap({ reason: error.message, location: n.loc }); }
-      } else if (p.isUpdateExpression()) {
-        const n = p.node;
-        try {
-          const { prefix, ref } = reference(p, n.argument);
-          const step = temp(p);
-          const before = t.memberExpression(t.cloneNode(step), t.identifier('before'));
-          const after = t.memberExpression(t.cloneNode(step), t.identifier('after'));
-          p.replaceWith(t.sequenceExpression([...prefix,
-            assign(step, call('step', [t.cloneNode(ref), t.numericLiteral(n.operator === '++' ? 1 : -1)])),
-            assign(ref, t.cloneNode(after)), n.prefix ? after : before]));
-        } catch (error) { onGap({ reason: error.message, location: n.loc }); }
-      } else if (valuePath.isExpression() && !valuePath.isFunction() && !valuePath.isClass()) {
-        valuePath.replaceWith(captured(valuePath.node));
-      } else onGap({ reason: 'unsupported-expression', location: p.node.loc });
-      p.skip();
-    }
-  });
-  for (const key of wanted) if (!found.has(key)) throw new Error(`Instrumentation location not found: ${key}`);
+  const ast = parse(source), found = new Set();
+  traverse(ast, { exit(p) {
+    if (!p.node.loc || !wanted.has(locationKey(p.node.loc))) return;
+    const key=locationKey(p.node.loc);found.add(key);
+    let value=p;
+    if(p.isVariableDeclarator())value=p.get('init');
+    else if(p.isReturnStatement() || p.isThrowStatement())value=p.get('argument');
+    else if(p.isExportDefaultDeclaration())value=p.get('declaration');
+    if(!value.node || !value.isExpression() || value.isFunction() || value.isClass() || isHelper(value.node,'result')) return;
+    const reason=unsafeReason(value.node);
+    if(reason){onGap({reason,location:p.node.loc});return;}
+    const transformed=instrumentExpression(value.node,p,onGap);
+    value.replaceWith(call('result',[transformed,t.stringLiteral(key),t.numericLiteral(iteration)]));
+    p.skip();
+  }});
+  for(const key of wanted)if(!found.has(key))throw new Error(`Instrumentation location not found: ${key}`);
   return print(ast);
 }
 

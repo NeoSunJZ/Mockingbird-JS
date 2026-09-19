@@ -44,8 +44,11 @@ test('methods keep stable identity and dynamic receivers without cloning', () =>
 test('provenance never invents child paths for derived values', () => {
   const t = setup();
   const p = t.source({ a: 1, b: 2 });
-  const out = t.capture(() => ({ x: Number(p.a) + 1, y: Number(p.b) + 1 }), 'object');
-  assert.deepEqual(new Set(t.labels(out.x)), new Set(['test/response#1:/a', 'test/response#1:/b']));
+  const a=p.a,b=p.b;
+  const out = t.object({ x: t.derive(Number(a)+1,[a],'x'), y:t.derive(Number(b)+1,[b],'y'), clean:0 });
+  assert.deepEqual(t.labels(out.x), ['test/response#1:/a']);
+  assert.deepEqual(t.labels(out.y), ['test/response#1:/b']);
+  assert.deepEqual(t.labels(out.clean), []);
   assert.equal(t.labels(t.varProxy({ x: p.a }, 1, p.a).x)[0], 'test/response#1:/a');
 });
 test('writes clear stale labels and copied children retain exact labels', () => {
@@ -75,7 +78,8 @@ test('capture executes once, unwinds exceptions and preserves string results', (
   const t = setup();
   const p = t.source({ n: 1 });
   let count = 0;
-  const value = t.capture(() => { count++; return Number(p.n) + 1; }, 'site');
+  const input = p.n;
+  const value = t.capture(() => { count++; return Number(input) + 1; }, 'site', 0, input);
   assert.equal(count, 1);
   assert.equal(t.raw(value), 2);
   assert.deepEqual(t.labels(value), ['test/response#1:/n']);
@@ -100,7 +104,7 @@ test('native array predicates use the original boolean value', () => {
 });
 test('value identities form a graph without conflating equal primitive sources', () => {
   const t=setup();const a=t.source(1);const b=t.source(1);
-  const c=t.capture(()=>Number(a)+1,'add');
+  const c=t.derive(Number(a)+1,[a],'add');
   assert.notEqual(t.meta(a).valueId,t.meta(b).valueId);
   assert.ok(t.meta(c).parents.includes(t.meta(a).valueId));
   assert.ok(!t.meta(c).parents.includes(t.meta(b).valueId));
